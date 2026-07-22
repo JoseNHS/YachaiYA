@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Pressable, View, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 export default function LoginScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const isDark = theme.text === '#FFFFFF';
+  const colorPalette = isDark ? Colors.dark : Colors.light;
+
   const { signInWithEmail, isDemoMode } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -30,12 +35,12 @@ export default function LoginScreen() {
       if (error) {
         setErrorMsg(typeof error === 'string' ? error : 'Credenciales inválidas. Verifica tu correo y contraseña.');
       } else if (user) {
-        // Redirigir al home específico del rol de manera independiente y segura
         router.replace(`/(app)/${user.role}/home` as any);
       } else {
         router.replace('/' as any);
       }
     } catch (e) {
+      console.error('Error al iniciar sesión:', e);
       setErrorMsg('Ocurrió un error inesperado durante el inicio de sesión.');
     } finally {
       setLoading(false);
@@ -45,104 +50,130 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colorPalette.background }}
     >
       <ScrollView
-        style={[styles.container, { backgroundColor: theme.background }]}
+        style={[styles.container, { backgroundColor: colorPalette.background }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <ThemedText style={styles.logo}>✨ YachaiYa</ThemedText>
-          <ThemedText type="title" style={styles.title}>Iniciar Sesión</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Marketplace de resolución de ejercicios matemáticos
+          <ThemedText
+            style={[
+              styles.logo,
+              {
+                fontFamily: Typography.fontFamily.bold,
+                color: colorPalette.primary, // Celeste logo!
+              }
+            ]}
+          >
+            YachaiYa
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.title,
+              {
+                fontFamily: Typography.fontFamily.semiBold,
+                color: colorPalette.text,
+              }
+            ]}
+          >
+            ¡Bienvenido!
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.subtitle,
+              {
+                fontFamily: Typography.fontFamily.regular,
+                color: colorPalette.textSecondary,
+              }
+            ]}
+          >
+            Inicia sesión para continuar en el marketplace.
           </ThemedText>
         </View>
 
-        <ThemedView type="backgroundElement" style={styles.formContainer}>
+        <Card style={styles.formContainer}>
           {errorMsg && (
             <View style={styles.errorBox}>
               <ThemedText style={styles.errorText}>⚠️ {errorMsg}</ThemedText>
             </View>
           )}
 
-          <View style={styles.inputGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Correo Electrónico</ThemedText>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: theme.backgroundSelected
-              }]}
-              placeholder="correo@ejemplo.com"
-              placeholderTextColor={theme.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
-          </View>
+          <Input
+            label="Correo Electrónico"
+            placeholder="correo@ejemplo.com"
+            type="email"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
+          />
 
-          <View style={styles.inputGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Contraseña</ThemedText>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: theme.backgroundSelected
-              }]}
-              placeholder="••••••••"
-              placeholderTextColor={theme.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              editable={!loading}
-            />
-          </View>
+          <Input
+            label="Contraseña"
+            placeholder="••••••••"
+            type="password"
+            value={password}
+            onChangeText={setPassword}
+            editable={!loading}
+          />
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.submitButton,
-              { opacity: pressed || loading ? 0.9 : 1 }
-            ]}
+          <Button
+            variant="primary"
+            title="Iniciar sesión"
             onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <ThemedText style={styles.submitButtonText}>Entrar</ThemedText>
-            )}
-          </Pressable>
+            loading={loading}
+            style={styles.submitButton}
+          />
 
-          <Pressable
+          <Button
+            variant="ghost"
+            title="¿No tienes cuenta? Regístrate aquí"
             onPress={() => router.push('/(auth)/register' as any)}
-            style={styles.registerLink}
             disabled={loading}
-          >
-            <ThemedText type="small" themeColor="textSecondary">
-              ¿No tienes cuenta? <ThemedText type="linkPrimary">Regístrate aquí</ThemedText>
-            </ThemedText>
-          </Pressable>
-        </ThemedView>
+            style={styles.registerLink}
+          />
+        </Card>
 
         {isDemoMode && (
-          <ThemedView type="backgroundElement" style={styles.demoBanner}>
-            <ThemedText type="smallBold" style={{ color: '#F59E0B', marginBottom: Spacing.half }}>
+          <Card style={styles.demoBanner}>
+            <ThemedText
+              style={[
+                styles.demoTitle,
+                {
+                  fontFamily: Typography.fontFamily.semiBold,
+                  color: colorPalette.accent, // fucsia emphasis
+                }
+              ]}
+            >
               💡 Modo Demo Activo (Prueba de Roles)
             </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText
+              style={[
+                styles.demoText,
+                {
+                  fontFamily: Typography.fontFamily.regular,
+                  color: colorPalette.textSecondary,
+                }
+              ]}
+            >
               Para validar la navegación segura e independiente por perfiles, inicia sesión con:
             </ThemedText>
-            <ThemedText type="code" style={styles.demoDetails}>
+            <ThemedText
+              style={[
+                styles.demoDetails,
+                {
+                  fontFamily: Typography.fontFamily.regular,
+                  color: colorPalette.textSecondary,
+                }
+              ]}
+            >
               • alumno@yachaiya.com ➜ Panel Alumno{'\n'}
               • docente@yachaiya.com ➜ Panel Docente{'\n'}
               • admin@yachaiya.com ➜ Panel Admin (Moderación)
             </ThemedText>
-          </ThemedView>
+          </Card>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -156,87 +187,67 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.five,
-    paddingVertical: Spacing.six,
-    gap: Spacing.five,
+    paddingHorizontal: Spacing.twentyFour,
+    paddingVertical: Spacing.thirtyTwo,
+    gap: Spacing.twentyFour,
   },
   headerSection: {
     alignItems: 'center',
-    gap: Spacing.one,
+    gap: Spacing.four,
   },
   logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#6366F1',
+    fontSize: Typography.sizes.display,
+    marginBottom: Spacing.eight,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: Typography.sizes.h1,
     textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: Typography.sizes.body,
+    lineHeight: 20,
   },
   formContainer: {
-    padding: Spacing.five,
-    borderRadius: Spacing.four,
+    padding: Spacing.twenty,
     gap: Spacing.four,
     borderWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
   },
   errorBox: {
     backgroundColor: '#EF444415',
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
+    padding: Spacing.twelve,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#EF444430',
+    marginBottom: Spacing.eight,
   },
   errorText: {
     color: '#EF4444',
     fontSize: 13,
     fontWeight: '600',
   },
-  inputGroup: {
-    gap: Spacing.two,
-  },
-  label: {
-    fontSize: 13,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    fontSize: 15,
-  },
   submitButton: {
-    backgroundColor: '#6366F1',
+    marginTop: Spacing.eight,
     height: 48,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.two,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   registerLink: {
-    alignItems: 'center',
-    marginTop: Spacing.one,
+    marginTop: Spacing.four,
   },
   demoBanner: {
-    padding: Spacing.four,
-    borderRadius: Spacing.four,
-    borderWidth: 1.5,
-    borderColor: '#F59E0B30',
-    backgroundColor: '#F59E0B08',
+    padding: Spacing.sixteen,
+    borderWidth: 1,
+  },
+  demoTitle: {
+    fontSize: Typography.sizes.caption + 1,
+    marginBottom: Spacing.eight,
+  },
+  demoText: {
+    fontSize: Typography.sizes.caption,
+    lineHeight: 16,
   },
   demoDetails: {
-    fontSize: 11,
-    marginTop: Spacing.one,
-    lineHeight: 16,
+    fontSize: Typography.sizes.caption,
+    marginTop: Spacing.eight,
+    lineHeight: 18,
   },
 });

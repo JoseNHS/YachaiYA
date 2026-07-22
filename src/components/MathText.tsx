@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Platform, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Platform, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/use-theme';
 
 // Cargar WebView de forma condicional para evitar crashes en Web
 let WebView: any = null;
 if (Platform.OS !== 'web') {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     WebView = require('react-native-webview').WebView;
   } catch (e) {
-    console.warn('react-native-webview no se pudo cargar en esta plataforma.');
+    console.warn('react-native-webview no se pudo cargar en esta plataforma:', e);
   }
 }
 
@@ -22,19 +23,8 @@ interface MathTextProps {
 export function MathText({ text, fontSize = 15, color, style }: MathTextProps) {
   const theme = useTheme();
   const [height, setHeight] = useState(40);
-  const [loading, setLoading] = useState(true);
 
   const activeColor = color || theme.text;
-
-  // Escapar caracteres especiales para inyección HTML segura
-  const escapeHtml = (unsafe: string) => {
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
 
   // Convertir saltos de línea de texto a formato HTML
   const formatTextToHtml = (rawText: string) => {
@@ -123,9 +113,8 @@ export function MathText({ text, fontSize = 15, color, style }: MathTextProps) {
           const data = JSON.parse(event.data);
           if (data.id === 'math-iframe' && data.height) {
             setHeight(data.height + 15);
-            setLoading(false);
           }
-        } catch (e) { }
+        } catch { }
       };
       window.addEventListener('message', handleWebMessage);
       return () => window.removeEventListener('message', handleWebMessage);
@@ -137,9 +126,8 @@ export function MathText({ text, fontSize = 15, color, style }: MathTextProps) {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.height) {
         setHeight(data.height + 15);
-        setLoading(false);
       }
-    } catch (e) { }
+    } catch { }
   };
 
   if (Platform.OS === 'web') {
@@ -178,7 +166,6 @@ export function MathText({ text, fontSize = 15, color, style }: MathTextProps) {
         showsHorizontalScrollIndicator={false}
         javaScriptEnabled={true}
         domStorageEnabled={true}
-        onLoadEnd={() => setLoading(false)}
       />
     </View>
   );

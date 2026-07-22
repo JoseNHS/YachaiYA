@@ -1,251 +1,529 @@
-import React, { useState } from 'react';
-import { StyleSheet, ScrollView, Pressable, View, TextInput, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Pressable, View, FlatList, ScrollView } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { MathText } from '@/components/MathText';
-import { Question, Answer } from '@/types/auth';
+import { Spacing, Typography, Colors } from '@/constants/theme';
+import { QuestionCard } from '@/components/questions/QuestionCard';
+import { QuestionSkeleton } from '@/components/questions/QuestionSkeleton';
+import { EmptyQuestions } from '@/components/questions/EmptyQuestions';
+import { Select } from '@/components/ui/Select';
+import { Chip } from '@/components/ui/Chip';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { Header } from '@/components/ui/Header';
+import { BottomNavigation } from '@/components/ui/BottomNavigation';
+import { useMarketplace } from '@/hooks/useMarketplace';
+import { answerService } from '@/services/answerService';
+import { notificationService } from '@/services/notificationService';
+import { Answer } from '@/types/auth';
 
 export default function DocenteHomeScreen() {
-  const theme = useTheme();
+  const router = useRouter();
   const { user, signOut } = useAuth();
+  const themeObj = useTheme();
+  const isDark = themeObj.text === '#FFFFFF';
+  const colorPalette = isDark ? Colors.dark : Colors.light;
 
-  // Ejercicios disponibles en el marketplace
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: 'q2',
-      title: 'Sistema de ecuaciones lineales 3x3',
-      description: 'Resuelve por Cramer el siguiente sistema:\n$$ \\begin{cases} x + 2y - z = 4 \\\\ 2x - y + z = 3 \\\\ -x + y + 2z = 5 \\end{cases} $$',
-      category: 'Álgebra',
-      difficulty: 'Básica',
-      reward_tokens: 15,
-      status: 'open',
-      author_id: 'alumno-1',
-      created_at: 'Hace 5 horas',
-    },
-    {
-      id: 'q3',
-      title: 'Derivada implícita de curva elíptica',
-      description: 'Encuentra $dy/dx$ para la curva definida por:\n$$ y^2 = x^3 + a x + b $$',
-      category: 'Cálculo',
-      difficulty: 'Avanzada',
-      reward_tokens: 35,
-      status: 'open',
-      author_id: 'alumno-2',
-      created_at: 'Hace 1 día',
+  const [activeTab, setActiveTab] = useState('inicio');
+  const [myAnswers, setMyAnswers] = useState<Answer[]>([]);
+  const [loadingAnswers, setLoadingAnswers] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+  const {
+    questions,
+    categories,
+    loading,
+    loadingMore,
+    refreshing,
+    error,
+    search,
+    setSearch,
+    selectedCategory,
+    selectedDifficulty,
+    setSelectedDifficulty,
+    selectedStatus,
+    setSelectedStatus,
+    orderBy,
+    setOrderBy,
+    onRefresh,
+    handleLoadMore,
+    handleCategoryPress,
+    handleRetry,
+    triggerFocusRefresh,
+    hasMore,
+  } = useMarketplace({
+    initialStatus: 'open',
+  });
+
+  useFocusEffect(triggerFocusRefresh);
+
+  useEffect(() => {
+    if (activeTab === 'notificaciones' && user?.id) {
+      setLoadingNotifications(true);
+      notificationService.getNotifications(user.id)
+        .then((list: any[]) => {
+          setNotifications(list);
+          setLoadingNotifications(false);
+        })
+        .catch((err: any) => {
+          console.warn('Error loading notifications:', err);
+          setLoadingNotifications(false);
+        });
     }
-  ]);
+  }, [activeTab, user?.id]);
 
-  // Respuestas escritas por el docente logueado
-  const [myAnswers, setMyAnswers] = useState<Answer[]>([
-    {
-      id: 'ans-10',
-      question_id: 'q1',
-      user_id: user?.id || 'docente-me',
-      content: 'La solución de la integral es $\\pi$ aplicando integración por partes.',
-      votes: 3,
-      is_accepted: true,
-      created_at: 'Hace 1 día',
+  const handleMarkAsRead = async (notifId: string) => {
+    try {
+      await notificationService.markNotificationRead(notifId);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+    } catch (e) {
+      console.warn('Error marking notification as read:', e);
     }
-  ]);
-
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
-  const [solutionText, setSolutionText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  const handleSubmitSolution = (question: Question) => {
-    if (!solutionText) return;
-    setSubmitting(true);
-
-    setTimeout(() => {
-      const newAnswer: Answer = {
-        id: 'ans-' + Math.random().toString(36).substr(2, 9),
-        question_id: question.id,
-        user_id: user?.id || 'docente-me',
-        content: solutionText,
-        votes: 0,
-        is_accepted: false,
-        created_at: 'Recién publicado',
-      };
-
-      setMyAnswers([newAnswer, ...myAnswers]);
-
-      // Simular que el alumno acepta automáticamente la respuesta de prueba en 4 segundos
-      // para mostrar la billetera de tokens y reputación subiendo automáticamente!
-      // ¡Esto hará que la experiencia se sienta mágica!
-      setTimeout(() => {
-        newAnswer.is_accepted = true;
-
-        // Simular abonos de tokens y reputación en Demo Mode
-        if (user) {
-          user.tokens += question.reward_tokens;
-          user.reputation += 10;
-        }
-
-        // Marcar la pregunta como resuelta localmente
-        setQuestions(prev => prev.filter(q => q.id !== question.id));
-
-        setSuccessMsg(`🎉 ¡Tu respuesta para "${question.title}" fue aceptada! Has ganado 🪙 ${question.reward_tokens} tokens y +10 de reputación.`);
-        setTimeout(() => setSuccessMsg(null), 6000);
-      }, 4000);
-
-      setSolutionText('');
-      setSelectedQuestionId(null);
-      setSubmitting(false);
-    }, 1500);
   };
+
+
+  // Fetch teacher's proposed answers when answers tab becomes active
+  useEffect(() => {
+    if (activeTab === 'respuestas' && user?.id) {
+      setLoadingAnswers(true);
+      answerService.getAnswersByUser(user.id)
+        .then(ans => {
+          setMyAnswers(ans);
+          setLoadingAnswers(false);
+        })
+        .catch(err => {
+          console.warn('Error fetching answers by user:', err);
+          setLoadingAnswers(false);
+        });
+    }
+  }, [activeTab, user?.id]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
+
+  const renderInicio = () => {
+    return (
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={questions}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <QuestionCard
+              question={item}
+              onPress={() => router.push(`/(app)/question/${item.id}` as any)}
+            />
+          )}
+          ListHeaderComponent={() => (
+            <View style={styles.feedHeaderContainer}>
+              {/* Wallet Card */}
+              <Card style={styles.walletCard}>
+                <View style={styles.walletStat}>
+                  <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Balance de Billetera</ThemedText>
+                  <ThemedText style={{ color: colorPalette.primary, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h2, marginTop: 4 }}>
+                    🪙 {user?.tokens ?? 0} Tokens
+                  </ThemedText>
+                </View>
+                <View style={[styles.verticalDivider, { backgroundColor: colorPalette.border }]} />
+                <View style={styles.walletStat}>
+                  <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Reputación Experto</ThemedText>
+                  <ThemedText style={{ color: colorPalette.accent, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h2, marginTop: 4 }}>
+                    ⭐ {user?.reputation ?? 0} Puntos
+                  </ThemedText>
+                </View>
+              </Card>
+
+              {/* Title Section */}
+              <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+                Ejercicios Abiertos para Resolver
+              </ThemedText>
+            </View>
+          )}
+          ListFooterComponent={renderFooterComponent}
+          ListEmptyComponent={
+            loading ? (
+              <View style={styles.skeletonsContainer}>
+                <QuestionSkeleton />
+                <QuestionSkeleton />
+                <QuestionSkeleton />
+              </View>
+            ) : (
+              renderEmptyComponent()
+            )
+          }
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    );
+  };
+
+  const renderMarketplace = () => {
+    return (
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={questions}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <QuestionCard
+              question={item}
+              onPress={() => router.push(`/(app)/question/${item.id}` as any)}
+            />
+          )}
+          ListHeaderComponent={() => (
+            <View style={styles.feedHeaderContainer}>
+              <SearchBar
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Buscar en el marketplace..."
+              />
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryChipsScroll}
+              >
+                <Chip
+                  label="Todos"
+                  selected={selectedCategory === null}
+                  onPress={() => handleCategoryPress(null)}
+                />
+                {categories.map((cat) => (
+                  <Chip
+                    key={cat.id}
+                    label={cat.name}
+                    selected={selectedCategory === cat.id}
+                    onPress={() => handleCategoryPress(cat.id)}
+                  />
+                ))}
+              </ScrollView>
+
+              <View style={styles.filterGrid}>
+                <View style={styles.filterHalf}>
+                  <Select
+                    label="Dificultad"
+                    selectedValue={selectedDifficulty}
+                    onValueChange={setSelectedDifficulty}
+                    options={[
+                      { label: 'Todas', value: 'all' },
+                      { label: 'Básica', value: 'Básica' },
+                      { label: 'Intermedia', value: 'Intermedia' },
+                      { label: 'Avanzada', value: 'Avanzada' },
+                      { label: 'Olímpica', value: 'Olimpiada' },
+                    ]}
+                  />
+                </View>
+                <View style={styles.filterHalf}>
+                  <Select
+                    label="Ordenar por"
+                    selectedValue={orderBy}
+                    onValueChange={setOrderBy}
+                    options={[
+                      { label: 'Más recientes', value: 'recent' },
+                      { label: 'Mayor Recompensa', value: 'highest_reward' },
+                      { label: 'Menor Recompensa', value: 'lowest_reward' },
+                      { label: 'Más respuestas', value: 'most_answers' },
+                      { label: 'Mayor reputación', value: 'highest_reputation' },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.filterGrid}>
+                <View style={{ flex: 1 }}>
+                  <Select
+                    label="Estado"
+                    selectedValue={selectedStatus}
+                    onValueChange={setSelectedStatus}
+                    options={[
+                      { label: 'Todos los estados', value: 'all' },
+                      { label: 'Abiertas', value: 'open' },
+                      { label: 'Resueltas', value: 'solved' },
+                      { label: 'En revisión', value: 'in_review' },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+          )}
+          ListFooterComponent={renderFooterComponent}
+          ListEmptyComponent={
+            loading ? (
+              <View style={styles.skeletonsContainer}>
+                <QuestionSkeleton />
+                <QuestionSkeleton />
+                <QuestionSkeleton />
+              </View>
+            ) : (
+              renderEmptyComponent()
+            )
+          }
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    );
+  };
+
+  const renderRespuestas = () => {
+    return (
+      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+          Mis Soluciones Propuestas ({myAnswers.length})
+        </ThemedText>
+
+        {loadingAnswers ? (
+          <View style={{ paddingVertical: Spacing.thirtyTwo }}>
+            <QuestionSkeleton />
+          </View>
+        ) : myAnswers.length === 0 ? (
+          <Card style={styles.emptyAnswersCard}>
+            <ThemedText style={{ fontSize: 28, marginBottom: Spacing.eight }}>🎓</ThemedText>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text, textAlign: 'center' }}>
+              Aún no has propuesto soluciones
+            </ThemedText>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, color: colorPalette.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+              Navega en el marketplace, encuentra ejercicios abiertos y propón soluciones de alta calidad para ganar reputación y tokens.
+            </ThemedText>
+          </Card>
+        ) : (
+          <View style={{ gap: Spacing.twelve }}>
+            {myAnswers.map((ans) => (
+              <Pressable
+                key={ans.id}
+                onPress={() => router.push(`/(app)/question/${ans.question_id}` as any)}
+              >
+                <Card style={styles.answerHistoryCard}>
+                  <View style={styles.answerHistoryHeader}>
+                    <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text, flex: 1 }}>
+                      {(ans as any).question_title || 'Ejercicio Resuelto'}
+                    </ThemedText>
+                    <ThemedText style={{ fontSize: 11, color: colorPalette.textSecondary }}>
+                      {new Date(ans.created_at).toLocaleDateString()}
+                    </ThemedText>
+                  </View>
+                  <ThemedText numberOfLines={2} style={{ fontSize: Typography.sizes.body, color: colorPalette.textSecondary, marginTop: Spacing.eight }}>
+                    {ans.content}
+                  </ThemedText>
+                  <View style={styles.answerHistoryFooter}>
+                    <ThemedText style={{ fontSize: 11, color: ans.is_accepted ? '#10B981' : colorPalette.accent, fontFamily: Typography.fontFamily.medium }}>
+                      {ans.is_accepted ? '🏆 Solución Oficial Aceptada' : '⏳ Pendiente de Selección'}
+                    </ThemedText>
+                  </View>
+                </Card>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
+  const renderNotificaciones = () => {
+    return (
+      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+          Mis Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
+        </ThemedText>
+
+        {loadingNotifications ? (
+          <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
+            <ThemedText style={{ color: colorPalette.textSecondary }}>Cargando notificaciones...</ThemedText>
+          </Card>
+        ) : notifications.length === 0 ? (
+          <View style={styles.emptyAlertsContainer}>
+            <ThemedText style={{ fontSize: 48, marginBottom: Spacing.sixteen }}>🔔</ThemedText>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h3, color: colorPalette.text }}>
+              Sin alertas nuevas
+            </ThemedText>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: colorPalette.textSecondary, textAlign: 'center', marginTop: 8 }}>
+              Te notificaremos cuando un alumno acepte tus soluciones y ganes tokens de recompensa.
+            </ThemedText>
+          </View>
+        ) : (
+          <View style={{ gap: Spacing.twelve }}>
+            {notifications.map((notif) => (
+              <Pressable
+                key={notif.id}
+                onPress={() => handleMarkAsRead(notif.id)}
+              >
+                <Card
+                  style={[
+                    styles.notificationCard,
+                    !notif.is_read && { borderColor: colorPalette.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.03)' }
+                  ]}
+                >
+                  <View style={styles.notifHeader}>
+                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: colorPalette.text }}>
+                      {notif.title}
+                    </ThemedText>
+                    {!notif.is_read && (
+                      <View style={[styles.unreadDot, { backgroundColor: colorPalette.primary }]} />
+                    )}
+                  </View>
+                  <ThemedText style={{ fontSize: Typography.sizes.body, color: colorPalette.textSecondary, marginTop: Spacing.four }}>
+                    {notif.message}
+                  </ThemedText>
+                  <ThemedText style={{ fontSize: 9, color: colorPalette.textSecondary, marginTop: Spacing.eight }}>
+                    {new Date(notif.created_at).toLocaleString()}
+                  </ThemedText>
+                </Card>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
+  const renderPerfil = () => {
+    const userInitials = user?.full_name
+      ? user.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+      : 'U';
+
+    const proposedCount = myAnswers.length;
+    const acceptedCount = myAnswers.filter(a => a.is_accepted).length;
+    const dateJoined = user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+
+    return (
+      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+        <Card style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <View style={[styles.profileAvatar, { backgroundColor: colorPalette.accent }]}>
+              <ThemedText style={{ fontSize: 20, fontFamily: Typography.fontFamily.bold, color: '#FFFFFF' }}>
+                {userInitials}
+              </ThemedText>
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h2, color: colorPalette.text }}>
+                {user?.full_name || 'Profesor'}
+              </ThemedText>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: colorPalette.textSecondary }}>
+                {user?.email || 'docente@yachaiya.com'}
+              </ThemedText>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, fontSize: Typography.sizes.caption, color: colorPalette.accent, marginTop: 4 }}>
+                👨‍🏫 Rol: Docente / Experto
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.horizontalDivider, { backgroundColor: colorPalette.border }]} />
+
+          <View style={styles.profileStatsRow}>
+            <View style={styles.profileStatItem}>
+              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Ganancias libres</ThemedText>
+              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+                🪙 {user?.tokens ?? 0}
+              </ThemedText>
+            </View>
+            <View style={styles.profileStatItem}>
+              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Reputación Docente</ThemedText>
+              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+                ⭐ {user?.reputation ?? 0}
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.horizontalDivider, { backgroundColor: colorPalette.border }]} />
+
+          <View style={{ gap: Spacing.eight }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Miembro desde:</ThemedText>
+              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{dateJoined}</ThemedText>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Respuestas propuestas:</ThemedText>
+              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{proposedCount}</ThemedText>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Soluciones aceptadas:</ThemedText>
+              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{acceptedCount}</ThemedText>
+            </View>
+          </View>
+        </Card>
+
+        {/* Botón de acceso directo a la Billetera */}
+        <Button
+          variant="outline"
+          title="💳 Ver Mi Billetera"
+          onPress={() => router.push('/(app)/wallet' as any)}
+          style={{ marginTop: Spacing.sixteen }}
+        />
+
+        <Button
+          variant="danger"
+          title="Cerrar Sesión"
+          onPress={signOut}
+          style={{ marginTop: Spacing.twenty }}
+        />
+      </ScrollView>
+    );
+  };
+
+  const renderFooterComponent = () => {
+    if (!hasMore) {
+      return (
+        <View style={styles.endOfFeedContainer}>
+          <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>
+            Has llegado al final del Marketplace
+          </ThemedText>
+        </View>
+      );
+    }
+    if (loadingMore) {
+      return (
+        <View style={styles.footerLoader}>
+          <QuestionSkeleton />
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const renderEmptyComponent = () => {
+    if (loading) return null;
+    return (
+      <View style={styles.centerContainer}>
+        <EmptyQuestions />
+      </View>
+    );
+  };
+
+  const renderErrorComponent = () => (
+    <View style={styles.errorContainer}>
+      <ThemedText style={styles.errorText}>No pudimos cargar los ejercicios del Marketplace.</ThemedText>
+      <Button title="Reintentar" onPress={handleRetry} style={{ marginTop: Spacing.twelve }} />
+    </View>
+  );
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header Premium */}
-        <ThemedView type="backgroundElement" style={styles.header}>
-          <View>
-            <ThemedText type="small" themeColor="textSecondary">Panel Experto / Docente</ThemedText>
-            <ThemedText type="smallBold" style={styles.profileName}>{user?.full_name}</ThemedText>
-          </View>
-          <Pressable style={styles.logoutBtn} onPress={signOut}>
-            <ThemedText style={styles.logoutText}>Salir</ThemedText>
-          </Pressable>
-        </ThemedView>
+        <Header onNotificationPress={() => handleTabChange('notificaciones')} />
 
-        <ScrollView
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Tarjeta de Ganancias y Reputación */}
-          <View style={styles.walletCard}>
-            <View style={styles.walletStat}>
-              <ThemedText style={styles.walletLabel}>Ganancias Acumuladas</ThemedText>
-              <ThemedText style={styles.walletValue}>🪙 {user?.tokens ?? 0} Tokens</ThemedText>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.walletStat}>
-              <ThemedText style={styles.walletLabel}>Reputación Experta</ThemedText>
-              <ThemedText style={styles.walletValue}>⭐ {user?.reputation ?? 45} Puntos</ThemedText>
-            </View>
-          </View>
+        <View style={styles.content}>
+          {activeTab === 'inicio' && (error ? renderErrorComponent() : renderInicio())}
+          {activeTab === 'marketplace' && (error ? renderErrorComponent() : renderMarketplace())}
+          {activeTab === 'respuestas' && renderRespuestas()}
+          {activeTab === 'notificaciones' && renderNotificaciones()}
+          {activeTab === 'perfil' && renderPerfil()}
+        </View>
 
-          {successMsg && (
-            <View style={styles.successBanner}>
-              <ThemedText style={styles.successBannerText}>{successMsg}</ThemedText>
-            </View>
-          )}
-
-          {/* Muro de Ejercicios */}
-          <View style={styles.sectionHeader}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Muro de Ejercicios Disponibles</ThemedText>
-          </View>
-
-          {questions.length === 0 ? (
-            <ThemedView type="backgroundElement" style={styles.emptyCard}>
-              <ThemedText type="small" themeColor="textSecondary">No hay más ejercicios matemáticos abiertos en este momento.</ThemedText>
-            </ThemedView>
-          ) : (
-            questions.map((question) => {
-              const isSelected = selectedQuestionId === question.id;
-
-              return (
-                <ThemedView key={question.id} type="backgroundElement" style={styles.questionCard}>
-                  <View style={styles.qHeader}>
-                    <View style={styles.tagContainer}>
-                      <View style={styles.categoryTag}>
-                        <ThemedText style={styles.tagText}>{question.category}</ThemedText>
-                      </View>
-                      <View style={[styles.difficultyTag, { borderColor: theme.backgroundSelected }]}>
-                        <ThemedText style={styles.difficultyText}>{question.difficulty}</ThemedText>
-                      </View>
-                    </View>
-                    <ThemedText type="smallBold" style={styles.rewardText}>🪙 {question.reward_tokens} Tokens</ThemedText>
-                  </View>
-
-                  <ThemedText type="smallBold" style={styles.qTitle}>{question.title}</ThemedText>
-
-                  {/* Renderizar Enunciado LaTeX */}
-                  <MathText text={question.description} style={styles.mathBlock} />
-
-                  <View style={styles.qActions}>
-                    <ThemedText type="small" themeColor="textSecondary">{question.created_at}</ThemedText>
-                    <Pressable
-                      style={[styles.resolveBtn, { backgroundColor: isSelected ? '#EF4444' : '#3B82F6' }]}
-                      onPress={() => {
-                        setSelectedQuestionId(isSelected ? null : question.id);
-                        setSolutionText('');
-                      }}
-                      disabled={submitting}
-                    >
-                      <ThemedText style={styles.resolveBtnText}>{isSelected ? 'Cerrar' : 'Resolver Ejercicio'}</ThemedText>
-                    </Pressable>
-                  </View>
-
-                  {/* Formulario de Respuesta LaTeX */}
-                  {isSelected && (
-                    <View style={[styles.answerForm, { borderColor: theme.backgroundSelected }]}>
-                      <View style={styles.formHeader}>
-                        <ThemedText type="smallBold">Redactar Solución Matemática</ThemedText>
-                        <ThemedText type="code" style={styles.latexHint}>LaTeX soportado</ThemedText>
-                      </View>
-                      <TextInput
-                        style={[styles.textArea, {
-                          backgroundColor: theme.background,
-                          color: theme.text,
-                          borderColor: theme.backgroundSelected
-                        }]}
-                        placeholder="Ej:\nPor la regla de derivación implícita:\n$$ 2y \\frac{dy}{dx} = 3x^2 + a $$"
-                        placeholderTextColor={theme.textSecondary}
-                        multiline
-                        numberOfLines={5}
-                        value={solutionText}
-                        onChangeText={setSolutionText}
-                        editable={!submitting}
-                      />
-                      <Pressable
-                        style={styles.submitAnswerBtn}
-                        onPress={() => handleSubmitSolution(question)}
-                        disabled={submitting || !solutionText}
-                      >
-                        {submitting ? (
-                          <ActivityIndicator color="#ffffff" size="small" />
-                        ) : (
-                          <ThemedText style={styles.submitAnswerBtnText}>Enviar Solución</ThemedText>
-                        )}
-                      </Pressable>
-                    </View>
-                  )}
-                </ThemedView>
-              );
-            })
-          )}
-
-          {/* Historial de Respuestas */}
-          <View style={[styles.sectionHeader, { marginTop: Spacing.four }]}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Mi Historial de Soluciones</ThemedText>
-          </View>
-
-          {myAnswers.map((ans) => (
-            <ThemedView key={ans.id} type="backgroundElement" style={styles.historyCard}>
-              <View style={styles.historyHeader}>
-                <View style={[styles.statusBadge, { backgroundColor: ans.is_accepted ? '#10B98115' : '#F59E0B15' }]}>
-                  <ThemedText style={{ color: ans.is_accepted ? '#10B981' : '#F59E0B', fontSize: 10, fontWeight: 'bold' }}>
-                    {ans.is_accepted ? 'Aceptada' : 'Pendiente'}
-                  </ThemedText>
-                </View>
-                <ThemedText type="small" themeColor="textSecondary">{ans.created_at}</ThemedText>
-              </View>
-              <MathText text={ans.content} style={styles.mathBlock} />
-              {ans.is_accepted && (
-                <ThemedText type="small" style={{ color: '#10B981', fontWeight: 'bold', marginTop: Spacing.one }}>
-                  ✓ Recompensa cobrada y reputación añadida
-                </ThemedText>
-              )}
-            </ThemedView>
-          ))}
-
-        </ScrollView>
+        <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
       </SafeAreaView>
     </ThemedView>
   );
@@ -258,215 +536,148 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.four,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
+  content: {
+    flex: 1,
   },
-  profileName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  logoutBtn: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: Spacing.two,
-  },
-  logoutText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#EF4444',
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.six,
-    gap: Spacing.three,
+  tabContentContainer: {
+    padding: Spacing.sixteen,
+    paddingBottom: Spacing.thirtyTwo,
   },
   walletCard: {
-    backgroundColor: '#3B82F6',
-    borderRadius: Spacing.four,
-    padding: Spacing.four,
+    padding: Spacing.sixteen,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    elevation: 6,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    marginBottom: Spacing.sixteen,
+    borderWidth: 1,
   },
   walletStat: {
     flex: 1,
     alignItems: 'center',
   },
-  walletLabel: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
-    marginBottom: Spacing.one,
-  },
-  walletValue: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  divider: {
-    width: 1,
-    height: 35,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  successBanner: {
-    backgroundColor: '#10B98115',
-    borderColor: '#10B98140',
-    borderWidth: 1.5,
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.one,
-  },
-  successBannerText: {
-    color: '#10B981',
-    fontWeight: 'bold',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  sectionHeader: {
-    marginTop: Spacing.two,
-    marginBottom: Spacing.half,
+  verticalDivider: {
+    width: 1.5,
+    height: 40,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: Typography.sizes.h3,
+    marginBottom: Spacing.twelve,
   },
-  emptyCard: {
-    padding: Spacing.five,
-    borderRadius: Spacing.four,
+  categoryChipsScroll: {
+    paddingVertical: Spacing.four,
+    marginBottom: Spacing.eight,
+    gap: Spacing.eight,
+  },
+  filterGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.twelve,
+    marginBottom: Spacing.four,
+  },
+  filterHalf: {
+    flex: 1,
+  },
+  skeletonsContainer: {
+    gap: Spacing.twelve,
+  },
+  listContainer: {
+    paddingHorizontal: Spacing.sixteen,
+    paddingBottom: Spacing.thirtyTwo,
+  },
+  feedHeaderContainer: {
+    marginTop: Spacing.sixteen,
+    marginBottom: Spacing.eight,
+  },
+  endOfFeedContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
+    paddingVertical: Spacing.twentyFour,
   },
-  questionCard: {
-    padding: Spacing.four,
-    borderRadius: Spacing.four,
-    borderWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
-    gap: Spacing.two,
+  footerLoader: {
+    marginVertical: Spacing.sixteen,
   },
-  qHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  errorContainer: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.twentyFour,
   },
-  tagContainer: {
-    flexDirection: 'row',
-    gap: Spacing.one,
+  errorText: {
+    fontSize: Typography.sizes.body,
+    textAlign: 'center',
+    color: '#EF4444',
   },
-  categoryTag: {
-    backgroundColor: '#3B82F615',
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#3B82F6',
-  },
-  difficultyTag: {
-    borderWidth: 1,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  difficultyText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  rewardText: {
-    color: '#3B82F6',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  qTitle: {
-    fontSize: 16,
-    marginTop: Spacing.one,
-  },
-  mathBlock: {
-    marginVertical: Spacing.one,
-  },
-  qActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  emptyAlertsContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: Spacing.one,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(150, 150, 150, 0.08)',
-    paddingTop: Spacing.two,
+    justifyContent: 'center',
+    paddingVertical: Spacing.sixtyFour,
+    paddingHorizontal: Spacing.twentyFour,
   },
-  resolveBtn: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
+  profileCard: {
+    padding: Spacing.twenty,
+    borderWidth: 1,
   },
-  resolveBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  answerForm: {
-    marginTop: Spacing.three,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  formHeader: {
+  profileHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.sixteen,
   },
-  latexHint: {
-    fontSize: 9,
-    color: '#3B82F6',
-  },
-  textArea: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 14,
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  submitAnswerBtn: {
-    backgroundColor: '#3B82F6',
-    height: 40,
-    borderRadius: Spacing.two,
+  profileAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  submitAnswerBtnText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 14,
+  horizontalDivider: {
+    height: 1,
+    marginVertical: Spacing.sixteen,
   },
-  historyCard: {
-    padding: Spacing.four,
-    borderRadius: Spacing.four,
+  profileStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  profileStatItem: {
+    alignItems: 'center',
+  },
+  emptyAnswersCard: {
+    padding: Spacing.twenty,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
   },
-  historyHeader: {
+  answerHistoryCard: {
+    padding: Spacing.sixteen,
+    borderWidth: 1,
+  },
+  answerHistoryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.two,
   },
-  statusBadge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
-    borderRadius: 6,
+  answerHistoryFooter: {
+    marginTop: Spacing.twelve,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  centerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.twentyFour,
+  },
+  notificationCard: {
+    padding: Spacing.sixteen,
+    borderWidth: 1,
+  },
+  notifHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });
