@@ -1,27 +1,56 @@
-import React, { useState } from 'react';
-import { StyleSheet, TextInput, Pressable, View, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Pressable, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { questionService } from '@/services/questionService';
+import { Category } from '@/types/auth';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 export default function PublishQuestionScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const isDark = theme.text === '#FFFFFF';
+  const colorPalette = isDark ? Colors.dark : Colors.light;
   const { user } = useAuth();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Cálculo');
+  const [categoriesList, setCategoriesList] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<'Básica' | 'Intermedia' | 'Avanzada' | 'Olimpiada'>('Intermedia');
   const [rewardTokens, setRewardTokens] = useState('20');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const categories = ['Álgebra', 'Cálculo', 'Geometría', 'Estadística', 'Física Matemática'];
+  useEffect(() => {
+    let active = true;
+    const fetchCategories = async () => {
+      try {
+        const cats = await questionService.getCategories();
+        if (active) {
+          setCategoriesList(cats);
+          const defaultCat = cats.find(c => c.slug === 'calculo') || cats[0];
+          if (defaultCat) {
+            setSelectedCategoryId(defaultCat.id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    };
+    fetchCategories();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const difficulties: ('Básica' | 'Intermedia' | 'Avanzada' | 'Olimpiada')[] = ['Básica', 'Intermedia', 'Avanzada', 'Olimpiada'];
 
   const handlePublish = async () => {
@@ -46,21 +75,23 @@ export default function PublishQuestionScreen() {
     setLoading(true);
 
     try {
-      // Simular guardado exitoso
-      setTimeout(() => {
-        // En una app real, realizaríamos supabase.from('questions').insert(...)
-        // lo cual dispararía el trigger de escrow.
+      if (!user) throw new Error('Usuario no identificado.');
+      if (!selectedCategoryId) throw new Error('Debe seleccionar una categoría.');
 
-        // Simular descuento del balance de usuario (en demo)
-        if (user) {
-          user.tokens -= tokensAmount;
-        }
+      await questionService.createQuestion(
+        title,
+        description,
+        selectedCategoryId,
+        difficulty,
+        tokensAmount,
+        user.id,
+        []
+      );
 
-        setLoading(false);
-        router.back();
-      }, 1500);
-    } catch (e) {
-      setErrorMsg('Ocurrió un error al intentar publicar tu ejercicio.');
+      setLoading(false);
+      router.back();
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Ocurrió un error al intentar publicar tu ejercicio.');
       setLoading(false);
     }
   };
@@ -68,22 +99,25 @@ export default function PublishQuestionScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colorPalette.background }}
     >
-      <ThemedView style={styles.container}>
+      <ThemedView style={[styles.container, { backgroundColor: colorPalette.background }]}>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           {/* Header */}
-          <ThemedView type="backgroundElement" style={styles.header}>
+          <View style={[styles.header, { backgroundColor: colorPalette.backgroundElement, borderBottomColor: colorPalette.border }]}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
-              <ThemedText style={styles.backText}>✕ Cancelar</ThemedText>
+              <ThemedText style={[styles.backText, { fontFamily: Typography.fontFamily.semiBold }]}>✕ Cancelar</ThemedText>
             </Pressable>
-            <ThemedText type="smallBold" style={styles.headerTitle}>Publicar Ejercicio</ThemedText>
+            <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+              Publicar Ejercicio
+            </ThemedText>
             <View style={{ width: 60 }} />
-          </ThemedView>
+          </View>
 
           <ScrollView
             contentContainerStyle={styles.contentContainer}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             {errorMsg && (
               <View style={styles.errorBox}>
@@ -91,135 +125,152 @@ export default function PublishQuestionScreen() {
               </View>
             )}
 
-            <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.label}>Título del Ejercicio</ThemedText>
-              <TextInput
-                style={[styles.input, {
-                  backgroundColor: theme.backgroundElement,
-                  color: theme.text,
-                  borderColor: theme.backgroundSelected
-                }]}
+            <Card style={styles.formCard}>
+              <Input
+                label="Título del Ejercicio"
                 placeholder="Ej. Derivada de función compuesta exponencial"
-                placeholderTextColor={theme.textSecondary}
                 value={title}
                 onChangeText={setTitle}
                 editable={!loading}
               />
-            </View>
 
-            <View style={styles.inputGroup}>
-              <View style={styles.labelWithHint}>
-                <ThemedText type="smallBold" style={styles.label}>Enunciado / Pregunta</ThemedText>
-                <ThemedText type="code" style={styles.hint}>Soporta fórmulas LaTeX usando $$</ThemedText>
-              </View>
-              <TextInput
-                style={[styles.textArea, {
-                  backgroundColor: theme.backgroundElement,
-                  color: theme.text,
-                  borderColor: theme.backgroundSelected
-                }]}
-                placeholder="Escribe el problema aquí. Ej:\nEncuentra el límite:\n$$ \lim_{x \to 0} \frac{\sin(x)}{x} $$"
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={6}
+              <Input
+                label="Enunciado / Pregunta (Soporta LaTeX $$)"
+                placeholder="Escribe el problema matemático aquí detallando los pasos..."
+                type="textarea"
                 value={description}
                 onChangeText={setDescription}
                 editable={!loading}
               />
-            </View>
 
-            {/* Categorías */}
-            <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.label}>Categoría</ThemedText>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeRow}>
-                {categories.map((cat) => {
-                  const isSelected = category === cat;
-                  return (
-                    <Pressable
-                      key={cat}
-                      style={[
-                        styles.badgeOption,
-                        {
-                          backgroundColor: isSelected ? '#6366F1' : theme.backgroundElement,
-                          borderColor: isSelected ? '#6366F1' : theme.backgroundSelected
-                        }
-                      ]}
-                      onPress={() => setCategory(cat)}
-                      disabled={loading}
-                    >
-                      <ThemedText style={{ color: isSelected ? '#ffffff' : theme.text, fontSize: 13, fontWeight: 'bold' }}>
-                        {cat}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
+              {/* Categorías */}
+              <View style={styles.inputGroup}>
+                <ThemedText
+                  style={[
+                    styles.label,
+                    {
+                      fontFamily: Typography.fontFamily.medium,
+                      color: colorPalette.textSecondary,
+                      marginBottom: Spacing.eight,
+                    }
+                  ]}
+                >
+                  Categoría
+                </ThemedText>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeRow}>
+                  {categoriesList.map((cat) => {
+                    const isSelected = selectedCategoryId === cat.id;
+                    const activeBg = isSelected ? 'rgba(108, 198, 255, 0.08)' : colorPalette.backgroundElement;
+                    const borderClr = isSelected ? colorPalette.primary : colorPalette.border;
+                    const textClr = isSelected ? colorPalette.primary : colorPalette.text;
 
-            {/* Dificultad */}
-            <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.label}>Dificultad</ThemedText>
-              <View style={styles.difficultyGrid}>
-                {difficulties.map((diff) => {
-                  const isSelected = difficulty === diff;
-                  return (
-                    <Pressable
-                      key={diff}
-                      style={[
-                        styles.diffOption,
-                        {
-                          backgroundColor: isSelected ? '#3B82F6' : theme.backgroundElement,
-                          borderColor: isSelected ? '#3B82F6' : theme.backgroundSelected
-                        }
-                      ]}
-                      onPress={() => setDifficulty(diff)}
-                      disabled={loading}
-                    >
-                      <ThemedText style={{ color: isSelected ? '#ffffff' : theme.text, fontSize: 13, fontWeight: 'bold' }}>
-                        {diff}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        style={[
+                          styles.badgeOption,
+                          {
+                            backgroundColor: activeBg,
+                            borderColor: borderClr
+                          }
+                        ]}
+                        onPress={() => setSelectedCategoryId(cat.id)}
+                        disabled={loading}
+                      >
+                        <ThemedText
+                          style={{
+                            color: textClr,
+                            fontSize: 13,
+                            fontFamily: Typography.fontFamily.semiBold
+                          }}
+                        >
+                          {cat.name}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
               </View>
-            </View>
 
-            {/* Tokens de Recompensa */}
-            <View style={styles.inputGroup}>
-              <ThemedText type="smallBold" style={styles.label}>Recompensa (Tokens 🪙)</ThemedText>
-              <View style={styles.tokensInputContainer}>
-                <TextInput
-                  style={[styles.input, styles.tokenInput, {
-                    backgroundColor: theme.backgroundElement,
-                    color: theme.text,
-                    borderColor: theme.backgroundSelected
-                  }]}
-                  keyboardType="numeric"
+              {/* Dificultad */}
+              <View style={styles.inputGroup}>
+                <ThemedText
+                  style={[
+                    styles.label,
+                    {
+                      fontFamily: Typography.fontFamily.medium,
+                      color: colorPalette.textSecondary,
+                      marginBottom: Spacing.eight,
+                    }
+                  ]}
+                >
+                  Dificultad
+                </ThemedText>
+                <View style={styles.difficultyGrid}>
+                  {difficulties.map((diff) => {
+                    const isSelected = difficulty === diff;
+                    const activeBg = isSelected ? 'rgba(255, 20, 147, 0.08)' : colorPalette.backgroundElement;
+                    const borderClr = isSelected ? colorPalette.accent : colorPalette.border;
+                    const textClr = isSelected ? colorPalette.accent : colorPalette.text;
+
+                    return (
+                      <Pressable
+                        key={diff}
+                        style={[
+                          styles.diffOption,
+                          {
+                            backgroundColor: activeBg,
+                            borderColor: borderClr
+                          }
+                        ]}
+                        onPress={() => setDifficulty(diff)}
+                        disabled={loading}
+                      >
+                        <ThemedText
+                          style={{
+                            color: textClr,
+                            fontSize: 13,
+                            fontFamily: Typography.fontFamily.semiBold
+                          }}
+                        >
+                          {diff}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Tokens de Recompensa */}
+              <View style={styles.inputGroup}>
+                <Input
+                  label="Recompensa (Tokens 🪙)"
+                  type="tokens"
                   value={rewardTokens}
                   onChangeText={setRewardTokens}
                   editable={!loading}
                 />
-                <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1, marginLeft: Spacing.three }}>
+                <ThemedText
+                  style={[
+                    styles.escrowHint,
+                    {
+                      fontFamily: Typography.fontFamily.regular,
+                      color: colorPalette.textSecondary,
+                    }
+                  ]}
+                >
                   Los tokens serán retenidos de tu saldo (🪙 {user?.tokens ?? 100} actuales) hasta que aceptes la solución de un experto.
                 </ThemedText>
               </View>
-            </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.publishBtn,
-                { opacity: pressed || loading ? 0.9 : 1 }
-              ]}
-              onPress={handlePublish}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <ThemedText style={styles.publishBtnText}>Confirmar y Retener Tokens</ThemedText>
-              )}
-            </Pressable>
-
+              <Button
+                variant="secondary" // Fucsia fucsia fucsia!
+                title="Confirmar y Retener Tokens"
+                onPress={handlePublish}
+                loading={loading}
+                style={styles.publishBtn}
+              />
+            </Card>
           </ScrollView>
         </SafeAreaView>
       </ThemedView>
@@ -238,32 +289,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.sixteen,
+    paddingVertical: Spacing.twelve,
     borderBottomWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
   },
   backBtn: {
-    paddingVertical: Spacing.one,
+    paddingVertical: Spacing.four,
   },
   backText: {
     color: '#EF4444',
-    fontWeight: 'bold',
+    fontSize: 14,
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
   },
   contentContainer: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.six,
-    gap: Spacing.four,
+    padding: Spacing.sixteen,
+    paddingBottom: Spacing.thirtyTwo,
+    gap: Spacing.sixteen,
   },
   errorBox: {
     backgroundColor: '#EF444415',
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
+    padding: Spacing.twelve,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#EF444430',
   },
@@ -272,80 +320,48 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  formCard: {
+    padding: Spacing.twenty,
+    borderWidth: 1,
+    gap: Spacing.sixteen,
+  },
   inputGroup: {
-    gap: Spacing.two,
+    width: '100%',
   },
   label: {
-    fontSize: 13,
-  },
-  labelWithHint: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  hint: {
-    fontSize: 9,
-    color: '#3B82F6',
-  },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    fontSize: 15,
-  },
-  textArea: {
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    fontSize: 15,
-    textAlignVertical: 'top',
-    height: 120,
+    fontSize: Typography.sizes.caption,
   },
   badgeRow: {
-    gap: Spacing.two,
-    paddingBottom: 2,
+    gap: Spacing.eight,
+    paddingBottom: 4,
   },
   badgeOption: {
     borderWidth: 1.5,
     borderRadius: 20,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.sixteen,
+    paddingVertical: Spacing.eight,
   },
   difficultyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.two,
+    gap: Spacing.eight,
   },
   diffOption: {
     flex: 1,
     minWidth: '45%',
     borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
+    borderRadius: Radius.r16,
+    paddingVertical: Spacing.twelve,
     alignItems: 'center',
   },
-  tokensInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tokenInput: {
-    width: 80,
-    textAlign: 'center',
-    fontWeight: 'bold',
+  escrowHint: {
+    fontSize: Typography.sizes.caption - 1,
+    lineHeight: 14,
+    marginTop: -Spacing.eight,
+    marginBottom: Spacing.eight,
   },
   publishBtn: {
-    backgroundColor: '#6366F1',
     height: 48,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.three,
-  },
-  publishBtnText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 15,
+    marginTop: Spacing.eight,
   },
 });

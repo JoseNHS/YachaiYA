@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Pressable, View, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Pressable, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/auth';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const isDark = theme.text === '#FFFFFF';
+  const colorPalette = isDark ? Colors.dark : Colors.light;
+
   const { signUpWithEmail } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -33,118 +38,133 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      // Registrar al usuario con el rol seguro (solo alumno o docente en el frontend)
       const { error } = await signUpWithEmail(email, password, fullName, role as UserRole);
       if (error) {
         setErrorMsg(typeof error === 'string' ? error : 'Error al registrar. Intenta con otro correo.');
       } else {
-        // Redirigir al layout del rol correspondiente
         router.replace(`/(app)/${role}/home` as any);
       }
     } catch (e) {
+      console.error('Error al registrar usuario:', e);
       setErrorMsg('Ocurrió un error inesperado al registrar el usuario.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Solo se permiten registros públicos para Alumno y Docente. El rol Admin se asigna manualmente en Supabase.
   const roleOptions: { value: 'alumno' | 'docente'; label: string; emoji: string; desc: string; activeColor: string }[] = [
-    { value: 'alumno', label: 'Alumno', emoji: '🎒', desc: 'Publica ejercicios matemáticos ofreciendo tokens de recompensa.', activeColor: '#6366F1' },
-    { value: 'docente', label: 'Docente / Experto', emoji: '🎓', desc: 'Resuelve problemas complejos y gana tokens y reputación.', activeColor: '#3B82F6' },
+    { value: 'alumno', label: 'Alumno', emoji: '🎒', desc: 'Publica ejercicios matemáticos ofreciendo tokens de recompensa.', activeColor: colorPalette.primary },
+    { value: 'docente', label: 'Docente / Experto', emoji: '🎓', desc: 'Resuelve problemas complejos y gana tokens y reputación.', activeColor: colorPalette.accent },
   ];
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colorPalette.background }}
     >
       <ScrollView
-        style={[styles.container, { backgroundColor: theme.background }]}
+        style={[styles.container, { backgroundColor: colorPalette.background }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <ThemedText style={styles.logo}>✨ YachaiYa</ThemedText>
-          <ThemedText type="title" style={styles.title}>Crear Cuenta</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Marketplace de resolución de ejercicios matemáticos
+          <ThemedText
+            style={[
+              styles.logo,
+              {
+                fontFamily: Typography.fontFamily.bold,
+                color: colorPalette.primary,
+              }
+            ]}
+          >
+            YachaiYa
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.title,
+              {
+                fontFamily: Typography.fontFamily.semiBold,
+                color: colorPalette.text,
+              }
+            ]}
+          >
+            Crear Cuenta
+          </ThemedText>
+          <ThemedText
+            style={[
+              styles.subtitle,
+              {
+                fontFamily: Typography.fontFamily.regular,
+                color: colorPalette.textSecondary,
+              }
+            ]}
+          >
+            Únete a la red de colaboración matemática.
           </ThemedText>
         </View>
 
-        <ThemedView type="backgroundElement" style={styles.formContainer}>
+        <Card style={styles.formContainer}>
           {errorMsg && (
             <View style={styles.errorBox}>
               <ThemedText style={styles.errorText}>⚠️ {errorMsg}</ThemedText>
             </View>
           )}
 
-          <View style={styles.inputGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Nombre Completo</ThemedText>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: theme.backgroundSelected
-              }]}
-              placeholder="Ej. Juan Pérez"
-              placeholderTextColor={theme.textSecondary}
-              value={fullName}
-              onChangeText={setFullName}
-              editable={!loading}
-            />
-          </View>
+          <Input
+            label="Nombre Completo"
+            placeholder="Ej. Juan Pérez"
+            value={fullName}
+            onChangeText={setFullName}
+            editable={!loading}
+          />
 
-          <View style={styles.inputGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Correo Electrónico</ThemedText>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: theme.backgroundSelected
-              }]}
-              placeholder="correo@ejemplo.com"
-              placeholderTextColor={theme.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
-          </View>
+          <Input
+            label="Correo Electrónico"
+            placeholder="correo@ejemplo.com"
+            type="email"
+            value={email}
+            onChangeText={setEmail}
+            editable={!loading}
+          />
 
-          <View style={styles.inputGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Contraseña</ThemedText>
-            <TextInput
-              style={[styles.input, {
-                backgroundColor: theme.background,
-                color: theme.text,
-                borderColor: theme.backgroundSelected
-              }]}
-              placeholder="Mínimo 6 caracteres"
-              placeholderTextColor={theme.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              editable={!loading}
-            />
-          </View>
+          <Input
+            label="Contraseña"
+            placeholder="Mínimo 6 caracteres"
+            type="password"
+            value={password}
+            onChangeText={setPassword}
+            editable={!loading}
+          />
 
           {/* Selector de Roles de Negocio */}
           <View style={styles.roleGroup}>
-            <ThemedText type="smallBold" style={styles.label}>Selecciona tu Perfil</ThemedText>
+            <ThemedText
+              style={[
+                styles.label,
+                {
+                  fontFamily: Typography.fontFamily.medium,
+                  color: colorPalette.textSecondary,
+                  marginBottom: Spacing.eight,
+                }
+              ]}
+            >
+              Selecciona tu Perfil
+            </ThemedText>
             <View style={styles.roleGrid}>
               {roleOptions.map((option) => {
                 const isSelected = role === option.value;
+                const activeBg = isSelected ? (option.value === 'alumno' ? 'rgba(108, 198, 255, 0.08)' : 'rgba(255, 20, 147, 0.08)') : colorPalette.backgroundElement;
+                const borderClr = isSelected ? option.activeColor : colorPalette.border;
+
                 return (
                   <Pressable
                     key={option.value}
                     style={[
                       styles.roleButton,
                       {
-                        backgroundColor: isSelected ? option.activeColor + '10' : theme.background,
-                        borderColor: isSelected ? option.activeColor : theme.backgroundSelected
+                        backgroundColor: activeBg,
+                        borderColor: borderClr
                       }
                     ]}
                     onPress={() => setRole(option.value)}
@@ -152,10 +172,26 @@ export default function RegisterScreen() {
                   >
                     <ThemedText style={styles.roleEmoji}>{option.emoji}</ThemedText>
                     <View style={{ flex: 1 }}>
-                      <ThemedText type="smallBold" style={[styles.roleLabel, isSelected && { color: option.activeColor }]}>
+                      <ThemedText
+                        style={[
+                          styles.roleLabel,
+                          {
+                            fontFamily: Typography.fontFamily.semiBold,
+                            color: isSelected ? option.activeColor : colorPalette.text,
+                          }
+                        ]}
+                      >
                         {option.label}
                       </ThemedText>
-                      <ThemedText style={styles.roleDesc} themeColor="textSecondary">
+                      <ThemedText
+                        style={[
+                          styles.roleDesc,
+                          {
+                            fontFamily: Typography.fontFamily.regular,
+                            color: colorPalette.textSecondary,
+                          }
+                        ]}
+                      >
                         {option.desc}
                       </ThemedText>
                     </View>
@@ -165,31 +201,22 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.submitButton,
-              { opacity: pressed || loading ? 0.9 : 1 }
-            ]}
+          <Button
+            variant="primary"
+            title="Registrarme"
             onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <ThemedText style={styles.submitButtonText}>Registrarme</ThemedText>
-            )}
-          </Pressable>
+            loading={loading}
+            style={styles.submitButton}
+          />
 
-          <Pressable
+          <Button
+            variant="ghost"
+            title="¿Ya tienes cuenta? Inicia sesión"
             onPress={() => router.push('/(auth)/login' as any)}
-            style={styles.registerLink}
             disabled={loading}
-          >
-            <ThemedText type="small" themeColor="textSecondary">
-              ¿Ya tienes cuenta? <ThemedText type="linkPrimary">Inicia sesión</ThemedText>
-            </ThemedText>
-          </Pressable>
-        </ThemedView>
+            style={styles.registerLink}
+          />
+        </Card>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -202,102 +229,80 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.five,
-    paddingVertical: Spacing.six,
-    gap: Spacing.five,
+    paddingHorizontal: Spacing.twentyFour,
+    paddingVertical: Spacing.thirtyTwo,
+    gap: Spacing.twentyFour,
   },
   headerSection: {
     alignItems: 'center',
-    gap: Spacing.one,
+    gap: Spacing.four,
   },
   logo: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#6366F1',
+    fontSize: Typography.sizes.display,
+    marginBottom: Spacing.eight,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: Typography.sizes.h1,
     textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: Typography.sizes.body,
+    lineHeight: 20,
   },
   formContainer: {
-    padding: Spacing.five,
-    borderRadius: Spacing.four,
+    padding: Spacing.twenty,
     gap: Spacing.four,
     borderWidth: 1,
-    borderColor: 'rgba(150, 150, 150, 0.1)',
   },
   errorBox: {
     backgroundColor: '#EF444415',
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
+    padding: Spacing.twelve,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#EF444430',
+    marginBottom: Spacing.eight,
   },
   errorText: {
     color: '#EF4444',
     fontSize: 13,
     fontWeight: '600',
   },
-  inputGroup: {
-    gap: Spacing.two,
-  },
   label: {
-    fontSize: 13,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    fontSize: 15,
+    fontSize: Typography.sizes.caption,
   },
   roleGroup: {
-    gap: Spacing.two,
+    marginBottom: Spacing.twelve,
   },
   roleGrid: {
     flexDirection: 'column',
-    gap: Spacing.two,
+    gap: Spacing.twelve,
   },
   roleButton: {
     borderWidth: 1.5,
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
+    borderRadius: 16,
+    padding: Spacing.sixteen,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.twelve,
   },
   roleEmoji: {
-    fontSize: 22,
-    marginRight: Spacing.one,
+    fontSize: 24,
+    marginRight: Spacing.four,
   },
   roleLabel: {
-    fontSize: 14,
+    fontSize: Typography.sizes.body + 1,
     marginBottom: 2,
   },
   roleDesc: {
-    fontSize: 11,
+    fontSize: Typography.sizes.caption,
     lineHeight: 14,
   },
   submitButton: {
-    backgroundColor: '#6366F1',
+    marginTop: Spacing.eight,
     height: 48,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.two,
-  },
-  submitButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
   registerLink: {
-    alignItems: 'center',
-    marginTop: Spacing.one,
+    marginTop: Spacing.four,
   },
 });

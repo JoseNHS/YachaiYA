@@ -39,13 +39,26 @@ export const StorageService = {
         fileBody = blob;
       }
 
+      // Detectar content type según la extensión del archivo para soportar PDFs, SVG y múltiples formatos
+      let contentType = 'image/jpeg';
+      const extension = localUri.split('.').pop()?.toLowerCase();
+      if (extension === 'pdf') {
+        contentType = 'application/pdf';
+      } else if (extension === 'png') {
+        contentType = 'image/png';
+      } else if (extension === 'svg') {
+        contentType = 'image/svg+xml';
+      } else if (extension === 'gif') {
+        contentType = 'image/gif';
+      }
+
       // 1. Subir el archivo al bucket
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, fileBody, {
           cacheControl: '3600',
           upsert: false,
-          contentType: 'image/jpeg'
+          contentType: contentType
         });
 
       if (error) {
