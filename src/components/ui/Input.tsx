@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View, Pressable, TextInputProps, StyleProp, ViewStyle } from 'react-native';
+import { Search, Eye, EyeOff, Coins } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -22,8 +23,6 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +50,7 @@ export const Input: React.FC<InputProps> = ({
             styles.label,
             {
               fontFamily: Typography.fontFamily.medium,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >
@@ -63,35 +62,35 @@ export const Input: React.FC<InputProps> = ({
         style={[
           styles.inputContainer,
           {
-            backgroundColor: colorPalette.backgroundElement,
+            backgroundColor: theme.backgroundElement,
             borderColor: error 
               ? '#EF4444' 
               : isFocused 
-                ? colorPalette.primary 
-                : colorPalette.border,
+                ? theme.primary 
+                : theme.border,
             borderWidth: 1.5,
           },
           type === 'textarea' && { height: 120, alignItems: 'flex-start' }
         ]}
       >
         {type === 'search' && (
-          <ThemedText style={styles.prefixIcon}>🔍</ThemedText>
+          <Search size={18} color={theme.textSecondary} style={styles.prefixIcon} />
         )}
         {type === 'tokens' && (
-          <ThemedText style={styles.prefixIcon}>🪙</ThemedText>
+          <Coins size={18} color={theme.primary} style={styles.prefixIcon} />
         )}
 
         <TextInput
           style={[
             styles.textInput,
             {
-              color: colorPalette.text,
+              color: theme.text,
               fontFamily: Typography.fontFamily.regular,
             },
             type === 'textarea' && { height: '100%', textAlignVertical: 'top', paddingTop: Spacing.eight },
             style
           ]}
-          placeholderTextColor={colorPalette.textSecondary}
+          placeholderTextColor={theme.textSecondary}
           secureTextEntry={actualSecureTextEntry}
           keyboardType={getKeyboardType()}
           multiline={type === 'textarea' || multiline}
@@ -105,9 +104,11 @@ export const Input: React.FC<InputProps> = ({
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeBtn}
           >
-            <ThemedText style={{ color: colorPalette.textSecondary }}>
-              {showPassword ? '👁️' : '🙈'}
-            </ThemedText>
+            {showPassword ? (
+              <EyeOff size={18} color={theme.textSecondary} />
+            ) : (
+              <Eye size={18} color={theme.textSecondary} />
+            )}
           </Pressable>
         )}
       </View>

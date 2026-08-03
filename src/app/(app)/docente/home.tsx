@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { QuestionCard } from '@/components/questions/QuestionCard';
 import { QuestionSkeleton } from '@/components/questions/QuestionSkeleton';
 import { EmptyQuestions } from '@/components/questions/EmptyQuestions';
@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Header } from '@/components/ui/Header';
 import { BottomNavigation } from '@/components/ui/BottomNavigation';
+import { WalletCard } from '@/components/ui/WalletCard';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { answerService } from '@/services/answerService';
 import { notificationService } from '@/services/notificationService';
@@ -25,9 +26,7 @@ import { Answer } from '@/types/auth';
 export default function DocenteHomeScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const themeObj = useTheme();
-  const isDark = themeObj.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
+  const theme = useTheme();
 
   const [activeTab, setActiveTab] = useState('inicio');
   const [myAnswers, setMyAnswers] = useState<Answer[]>([]);
@@ -123,24 +122,10 @@ export default function DocenteHomeScreen() {
           ListHeaderComponent={() => (
             <View style={styles.feedHeaderContainer}>
               {/* Wallet Card */}
-              <Card style={styles.walletCard}>
-                <View style={styles.walletStat}>
-                  <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Balance de Billetera</ThemedText>
-                  <ThemedText style={{ color: colorPalette.primary, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h2, marginTop: 4 }}>
-                    🪙 {user?.tokens ?? 0} Tokens
-                  </ThemedText>
-                </View>
-                <View style={[styles.verticalDivider, { backgroundColor: colorPalette.border }]} />
-                <View style={styles.walletStat}>
-                  <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Reputación Experto</ThemedText>
-                  <ThemedText style={{ color: colorPalette.accent, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h2, marginTop: 4 }}>
-                    ⭐ {user?.reputation ?? 0} Puntos
-                  </ThemedText>
-                </View>
-              </Card>
+              <WalletCard onPressWallet={() => router.push('/(app)/wallet' as any)} />
 
               {/* Title Section */}
-              <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+              <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
                 Ejercicios Abiertos para Resolver
               </ThemedText>
             </View>
@@ -282,7 +267,7 @@ export default function DocenteHomeScreen() {
   const renderRespuestas = () => {
     return (
       <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
-        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
           Mis Soluciones Propuestas ({myAnswers.length})
         </ThemedText>
 
@@ -293,10 +278,10 @@ export default function DocenteHomeScreen() {
         ) : myAnswers.length === 0 ? (
           <Card style={styles.emptyAnswersCard}>
             <ThemedText style={{ fontSize: 28, marginBottom: Spacing.eight }}>🎓</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text, textAlign: 'center' }}>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, color: theme.text, textAlign: 'center' }}>
               Aún no has propuesto soluciones
             </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, color: colorPalette.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, color: theme.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
               Navega en el marketplace, encuentra ejercicios abiertos y propón soluciones de alta calidad para ganar reputación y tokens.
             </ThemedText>
           </Card>
@@ -309,18 +294,18 @@ export default function DocenteHomeScreen() {
               >
                 <Card style={styles.answerHistoryCard}>
                   <View style={styles.answerHistoryHeader}>
-                    <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text, flex: 1 }}>
+                    <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, color: theme.text, flex: 1 }}>
                       {(ans as any).question_title || 'Ejercicio Resuelto'}
                     </ThemedText>
-                    <ThemedText style={{ fontSize: 11, color: colorPalette.textSecondary }}>
+                    <ThemedText style={{ fontSize: 11, color: theme.textSecondary }}>
                       {new Date(ans.created_at).toLocaleDateString()}
                     </ThemedText>
                   </View>
-                  <ThemedText numberOfLines={2} style={{ fontSize: Typography.sizes.body, color: colorPalette.textSecondary, marginTop: Spacing.eight }}>
+                  <ThemedText numberOfLines={2} style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.eight }}>
                     {ans.content}
                   </ThemedText>
                   <View style={styles.answerHistoryFooter}>
-                    <ThemedText style={{ fontSize: 11, color: ans.is_accepted ? '#10B981' : colorPalette.accent, fontFamily: Typography.fontFamily.medium }}>
+                    <ThemedText style={{ fontSize: 11, color: ans.is_accepted ? '#10B981' : theme.accent, fontFamily: Typography.fontFamily.medium }}>
                       {ans.is_accepted ? '🏆 Solución Oficial Aceptada' : '⏳ Pendiente de Selección'}
                     </ThemedText>
                   </View>
@@ -336,21 +321,21 @@ export default function DocenteHomeScreen() {
   const renderNotificaciones = () => {
     return (
       <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
-        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
           Mis Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
         </ThemedText>
 
         {loadingNotifications ? (
           <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
-            <ThemedText style={{ color: colorPalette.textSecondary }}>Cargando notificaciones...</ThemedText>
+            <ThemedText style={{ color: theme.textSecondary }}>Cargando notificaciones...</ThemedText>
           </Card>
         ) : notifications.length === 0 ? (
           <View style={styles.emptyAlertsContainer}>
             <ThemedText style={{ fontSize: 48, marginBottom: Spacing.sixteen }}>🔔</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h3, color: colorPalette.text }}>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h3, color: theme.text }}>
               Sin alertas nuevas
             </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: colorPalette.textSecondary, textAlign: 'center', marginTop: 8 }}>
+            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary, textAlign: 'center', marginTop: 8 }}>
               Te notificaremos cuando un alumno acepte tus soluciones y ganes tokens de recompensa.
             </ThemedText>
           </View>
@@ -364,21 +349,21 @@ export default function DocenteHomeScreen() {
                 <Card
                   style={[
                     styles.notificationCard,
-                    !notif.is_read && { borderColor: colorPalette.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.03)' }
+                    !notif.is_read && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.03)' }
                   ]}
                 >
                   <View style={styles.notifHeader}>
-                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: colorPalette.text }}>
+                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: theme.text }}>
                       {notif.title}
                     </ThemedText>
                     {!notif.is_read && (
-                      <View style={[styles.unreadDot, { backgroundColor: colorPalette.primary }]} />
+                      <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />
                     )}
                   </View>
-                  <ThemedText style={{ fontSize: Typography.sizes.body, color: colorPalette.textSecondary, marginTop: Spacing.four }}>
+                  <ThemedText style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.four }}>
                     {notif.message}
                   </ThemedText>
-                  <ThemedText style={{ fontSize: 9, color: colorPalette.textSecondary, marginTop: Spacing.eight }}>
+                  <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginTop: Spacing.eight }}>
                     {new Date(notif.created_at).toLocaleString()}
                   </ThemedText>
                 </Card>
@@ -403,55 +388,55 @@ export default function DocenteHomeScreen() {
       <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <View style={[styles.profileAvatar, { backgroundColor: colorPalette.accent }]}>
+            <View style={[styles.profileAvatar, { backgroundColor: theme.accent }]}>
               <ThemedText style={{ fontSize: 20, fontFamily: Typography.fontFamily.bold, color: '#FFFFFF' }}>
                 {userInitials}
               </ThemedText>
             </View>
             <View style={{ flex: 1 }}>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h2, color: colorPalette.text }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h2, color: theme.text }}>
                 {user?.full_name || 'Profesor'}
               </ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: colorPalette.textSecondary }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary }}>
                 {user?.email || 'docente@yachaiya.com'}
               </ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, fontSize: Typography.sizes.caption, color: colorPalette.accent, marginTop: 4 }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, fontSize: Typography.sizes.caption, color: theme.accent, marginTop: 4 }}>
                 👨‍🏫 Rol: Docente / Experto
               </ThemedText>
             </View>
           </View>
 
-          <View style={[styles.horizontalDivider, { backgroundColor: colorPalette.border }]} />
+          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
 
           <View style={styles.profileStatsRow}>
             <View style={styles.profileStatItem}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Ganancias libres</ThemedText>
-              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Ganancias libres</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
                 🪙 {user?.tokens ?? 0}
               </ThemedText>
             </View>
             <View style={styles.profileStatItem}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Reputación Docente</ThemedText>
-              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Reputación Docente</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
                 ⭐ {user?.reputation ?? 0}
               </ThemedText>
             </View>
           </View>
 
-          <View style={[styles.horizontalDivider, { backgroundColor: colorPalette.border }]} />
+          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
 
           <View style={{ gap: Spacing.eight }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Miembro desde:</ThemedText>
-              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{dateJoined}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Miembro desde:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{dateJoined}</ThemedText>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Respuestas propuestas:</ThemedText>
-              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{proposedCount}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Respuestas propuestas:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{proposedCount}</ThemedText>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>Soluciones aceptadas:</ThemedText>
-              <ThemedText style={{ color: colorPalette.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{acceptedCount}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Soluciones aceptadas:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{acceptedCount}</ThemedText>
             </View>
           </View>
         </Card>
@@ -478,7 +463,7 @@ export default function DocenteHomeScreen() {
     if (!hasMore) {
       return (
         <View style={styles.endOfFeedContainer}>
-          <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 12 }}>
+          <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
             Has llegado al final del Marketplace
           </ThemedText>
         </View>

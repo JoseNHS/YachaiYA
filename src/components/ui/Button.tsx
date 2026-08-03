@@ -2,10 +2,10 @@ import React from 'react';
 import { Pressable, StyleSheet, ActivityIndicator, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface ButtonProps extends PressableProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'emphasis' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -23,31 +23,35 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getStyles = () => {
     const bgStyle: ViewStyle = {};
-    let textColor: string = colorPalette.text;
+    let textColor: string = theme.text;
 
     switch (variant) {
       case 'primary':
-        bgStyle.backgroundColor = colorPalette.primary;
-        textColor = '#111111'; // High contrast text on celeste
+        bgStyle.backgroundColor = theme.primary;
+        textColor = '#FFFFFF';
         break;
       case 'secondary':
-        bgStyle.backgroundColor = colorPalette.accent;
-        textColor = '#FFFFFF'; // High contrast on fucsia
+        bgStyle.backgroundColor = theme.backgroundElement;
+        bgStyle.borderWidth = 1.5;
+        bgStyle.borderColor = theme.border;
+        textColor = '#111111';
+        break;
+      case 'emphasis':
+        bgStyle.backgroundColor = theme.accent;
+        textColor = '#FFFFFF';
         break;
       case 'outline':
         bgStyle.backgroundColor = 'transparent';
         bgStyle.borderWidth = 1.5;
-        bgStyle.borderColor = colorPalette.primary;
-        textColor = colorPalette.primary;
+        bgStyle.borderColor = theme.primary;
+        textColor = theme.primary;
         break;
       case 'ghost':
         bgStyle.backgroundColor = 'transparent';
-        textColor = colorPalette.text;
+        textColor = theme.text;
         break;
       case 'danger':
         bgStyle.backgroundColor = '#EF4444';
@@ -70,7 +74,7 @@ export const Button: React.FC<ButtonProps> = ({
         styles.base,
         styles[size],
         bgStyle,
-        pressed && !disabled && !loading && { opacity: 0.85 },
+        pressed && !disabled && !loading && { opacity: 0.9, transform: [{ scale: 0.98 }] },
         style
       ]}
       disabled={disabled || loading}

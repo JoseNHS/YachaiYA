@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export type BadgeVariant = 
   | 'alumno'
@@ -25,12 +25,10 @@ export interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({ variant, style }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getVariantStyles = () => {
-    let bg: string = colorPalette.backgroundElement;
-    let color: string = colorPalette.text;
+    let bg: string = theme.backgroundElement;
+    let color: string = theme.text;
     let label = '';
 
     switch (variant) {
@@ -120,13 +118,13 @@ export const Badge: React.FC<BadgeProps> = ({ variant, style }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.eight,
-    borderRadius: Radius.r8,
+    paddingVertical: Spacing.four - 1,
+    paddingHorizontal: Spacing.ten,
+    borderRadius: Radius.full,
     alignSelf: 'flex-start',
   },
   text: {
     fontSize: Typography.sizes.small + 1,
-    fontWeight: '600',
+    fontFamily: Typography.fontFamily.semiBold,
   },
 });

@@ -7,7 +7,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { MathText } from './MathText';
 import { answerService } from '../services/answerService';
-import { Spacing, Colors, Typography, Radius } from '../constants/theme';
+import { Spacing, Typography, Radius } from '../constants/theme';
 import { useTheme } from '../hooks/use-theme';
 
 interface AnswerCardProps {
@@ -28,8 +28,6 @@ export const AnswerCard = React.memo(({
   isAcceptedAnswer
 }: AnswerCardProps) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(answer.content);
@@ -152,7 +150,7 @@ export const AnswerCard = React.memo(({
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.eight, flexWrap: 'wrap' }}>
-            <ThemedText type="smallBold" style={[styles.authorName, { color: colorPalette.primary }]}>
+            <ThemedText type="smallBold" style={[styles.authorName, { color: theme.primary }]}>
               👨‍🏫 {answer.user_name || 'Docente Experto'}
             </ThemedText>
             {isAcceptedAnswer && (
@@ -282,8 +280,8 @@ AnswerCard.displayName = 'AnswerCard';
 
 const styles = StyleSheet.create({
   card: {
-    padding: Spacing.sixteen,
-    borderRadius: Radius.r16,
+    padding: Spacing.twenty,
+    borderRadius: Radius.r20,
     borderWidth: 1,
     marginBottom: Spacing.twelve,
     position: 'relative',

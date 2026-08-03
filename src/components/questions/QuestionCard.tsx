@@ -8,7 +8,7 @@ import { QuestionDifficulty } from './QuestionDifficulty';
 import { QuestionStatus } from './QuestionStatus';
 import { QuestionFooter } from './QuestionFooter';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Question } from '@/types/auth';
 
 export interface QuestionCardProps {
@@ -29,8 +29,6 @@ const getRelativeTime = (dateStr: string) => {
 
 export const QuestionCard: React.FC<QuestionCardProps> = React.memo(({ question, onPress }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const authorName = question.author?.full_name || 'Usuario YachaiYa';
   const authorReputation = question.author?.reputation || 0;
@@ -52,7 +50,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = React.memo(({ question,
               styles.title,
               {
                 fontFamily: Typography.fontFamily.semiBold,
-                color: colorPalette.text,
+                color: theme.text,
               }
             ]}
             numberOfLines={2}
@@ -66,7 +64,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = React.memo(({ question,
             styles.description,
             {
               fontFamily: Typography.fontFamily.regular,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
           numberOfLines={2}
@@ -79,13 +77,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = React.memo(({ question,
             <QuestionDifficulty difficulty={question.difficulty} />
             <QuestionStatus status={question.status} />
             {question.category?.name && (
-              <View style={[styles.categoryBadge, { backgroundColor: colorPalette.backgroundElement }]}>
+              <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundSelected }]}>
                 <ThemedText
                   style={[
                     styles.categoryText,
                     {
                       fontFamily: Typography.fontFamily.medium,
-                      color: colorPalette.textSecondary,
+                      color: theme.textSecondary,
                     }
                   ]}
                 >

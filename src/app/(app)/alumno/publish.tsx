@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 import { questionService } from '@/services/questionService';
 import { Category } from '@/types/auth';
 import { Input } from '@/components/ui/Input';
@@ -16,8 +16,6 @@ import { Card } from '@/components/ui/Card';
 export default function PublishQuestionScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
   const { user } = useAuth();
 
   const [title, setTitle] = useState('');
@@ -99,16 +97,16 @@ export default function PublishQuestionScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: colorPalette.background }}
+      style={{ flex: 1, backgroundColor: theme.background }}
     >
-      <ThemedView style={[styles.container, { backgroundColor: colorPalette.background }]}>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           {/* Header */}
-          <View style={[styles.header, { backgroundColor: colorPalette.backgroundElement, borderBottomColor: colorPalette.border }]}>
+          <View style={[styles.header, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border }]}>
             <Pressable onPress={() => router.back()} style={styles.backBtn}>
               <ThemedText style={[styles.backText, { fontFamily: Typography.fontFamily.semiBold }]}>✕ Cancelar</ThemedText>
             </Pressable>
-            <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+            <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
               Publicar Ejercicio
             </ThemedText>
             <View style={{ width: 60 }} />
@@ -150,7 +148,7 @@ export default function PublishQuestionScreen() {
                     styles.label,
                     {
                       fontFamily: Typography.fontFamily.medium,
-                      color: colorPalette.textSecondary,
+                      color: theme.textSecondary,
                       marginBottom: Spacing.eight,
                     }
                   ]}
@@ -160,9 +158,9 @@ export default function PublishQuestionScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeRow}>
                   {categoriesList.map((cat) => {
                     const isSelected = selectedCategoryId === cat.id;
-                    const activeBg = isSelected ? 'rgba(108, 198, 255, 0.08)' : colorPalette.backgroundElement;
-                    const borderClr = isSelected ? colorPalette.primary : colorPalette.border;
-                    const textClr = isSelected ? colorPalette.primary : colorPalette.text;
+                    const activeBg = isSelected ? 'rgba(108, 198, 255, 0.08)' : theme.backgroundElement;
+                    const borderClr = isSelected ? theme.primary : theme.border;
+                    const textClr = isSelected ? theme.primary : theme.text;
 
                     return (
                       <Pressable
@@ -199,7 +197,7 @@ export default function PublishQuestionScreen() {
                     styles.label,
                     {
                       fontFamily: Typography.fontFamily.medium,
-                      color: colorPalette.textSecondary,
+                      color: theme.textSecondary,
                       marginBottom: Spacing.eight,
                     }
                   ]}
@@ -209,9 +207,9 @@ export default function PublishQuestionScreen() {
                 <View style={styles.difficultyGrid}>
                   {difficulties.map((diff) => {
                     const isSelected = difficulty === diff;
-                    const activeBg = isSelected ? 'rgba(255, 20, 147, 0.08)' : colorPalette.backgroundElement;
-                    const borderClr = isSelected ? colorPalette.accent : colorPalette.border;
-                    const textClr = isSelected ? colorPalette.accent : colorPalette.text;
+                    const activeBg = isSelected ? 'rgba(255, 20, 147, 0.08)' : theme.backgroundElement;
+                    const borderClr = isSelected ? theme.accent : theme.border;
+                    const textClr = isSelected ? theme.accent : theme.text;
 
                     return (
                       <Pressable
@@ -255,7 +253,7 @@ export default function PublishQuestionScreen() {
                     styles.escrowHint,
                     {
                       fontFamily: Typography.fontFamily.regular,
-                      color: colorPalette.textSecondary,
+                      color: theme.textSecondary,
                     }
                   ]}
                 >

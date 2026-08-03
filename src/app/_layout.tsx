@@ -1,5 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider, Slot } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { DefaultTheme, ThemeProvider, Slot } from 'expo-router';
 import { AuthProvider } from '@/context/AuthContext';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { 
@@ -10,8 +9,19 @@ import {
   Poppins_700Bold 
 } from '@expo-google-fonts/poppins';
 
+const YachaiYaNavigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#6CC6FF',
+    background: '#F2F2F2',
+    card: '#FFFFFF',
+    text: '#111111',
+    border: '#E6E6E6',
+  },
+};
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
@@ -25,7 +35,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={YachaiYaNavigationTheme}>
         <AnimatedSplashOverlay />
         <Slot />
       </ThemeProvider>

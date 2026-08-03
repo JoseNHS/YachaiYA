@@ -11,7 +11,7 @@ export default function AppLayout() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }

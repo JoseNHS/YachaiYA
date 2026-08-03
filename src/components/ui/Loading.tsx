@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Animated, ActivityIndicator } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Colors } from '@/constants/theme';
+import { Spacing, Radius } from '@/constants/theme';
 
 export interface SkeletonProps {
   width?: number | string;
@@ -11,12 +11,10 @@ export interface SkeletonProps {
 
 export const Skeleton: React.FC<SkeletonProps> = ({
   width = '100%',
-  height,
+  height = 20,
   borderRadius = Radius.r8,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [fadeAnim] = useState(() => new Animated.Value(0.4));
 
@@ -45,7 +43,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
           width: width as any,
           height,
           borderRadius,
-          backgroundColor: colorPalette.backgroundElement,
+          backgroundColor: theme.border,
           opacity: fadeAnim,
         }
       ]}
@@ -55,12 +53,10 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 export const LoadingSpinner: React.FC = () => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View style={styles.spinnerContainer}>
-      <ActivityIndicator size="large" color={colorPalette.primary} />
+      <ActivityIndicator size="large" color={theme.primary} />
     </View>
   );
 };

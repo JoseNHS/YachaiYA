@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { Avatar } from '../ui/Avatar';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 
 export interface QuestionHeaderProps {
   authorName: string;
@@ -19,8 +19,6 @@ export const QuestionHeader: React.FC<QuestionHeaderProps> = ({
   dateStr,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View style={styles.container}>
@@ -33,7 +31,7 @@ export const QuestionHeader: React.FC<QuestionHeaderProps> = ({
                 styles.name,
                 {
                   fontFamily: Typography.fontFamily.semiBold,
-                  color: colorPalette.text,
+                  color: theme.text,
                 }
               ]}
             >
@@ -46,7 +44,7 @@ export const QuestionHeader: React.FC<QuestionHeaderProps> = ({
                   styles.repText,
                   {
                     fontFamily: Typography.fontFamily.medium,
-                    color: colorPalette.textSecondary,
+                    color: theme.textSecondary,
                   }
                 ]}
               >
@@ -59,7 +57,7 @@ export const QuestionHeader: React.FC<QuestionHeaderProps> = ({
               styles.date,
               {
                 fontFamily: Typography.fontFamily.regular,
-                color: colorPalette.textSecondary,
+                color: theme.textSecondary,
               }
             ]}
           >

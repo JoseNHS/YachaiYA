@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Typography, Colors } from '@/constants/theme';
+import { Typography } from '@/constants/theme';
 
 export interface AvatarProps {
   uri?: string | null;
@@ -21,8 +21,6 @@ const SIZE_MAP = {
 
 export const Avatar: React.FC<AvatarProps> = ({ uri, name = 'Usuario', size = 'm' }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const diameter = SIZE_MAP[size];
 
@@ -59,8 +57,8 @@ export const Avatar: React.FC<AvatarProps> = ({ uri, name = 'Usuario', size = 'm
           width: diameter,
           height: diameter,
           borderRadius: diameter / 2,
-          backgroundColor: colorPalette.backgroundElement,
-          borderColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
           borderWidth: 1,
         }
       ]}
@@ -69,7 +67,7 @@ export const Avatar: React.FC<AvatarProps> = ({ uri, name = 'Usuario', size = 'm
         style={{
           fontFamily: Typography.fontFamily.semiBold,
           fontSize: diameter * 0.4,
-          color: colorPalette.primary,
+          color: theme.primary,
         }}
       >
         {getInitials(name)}

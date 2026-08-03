@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface EmptyStateProps {
   emoji?: string;
@@ -18,16 +18,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   actionButton,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: colorPalette.backgroundElement,
-          borderColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
         }
       ]}
     >
@@ -38,7 +36,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           styles.title,
           {
             fontFamily: Typography.fontFamily.semiBold,
-            color: colorPalette.text,
+            color: theme.text,
           }
         ]}
       >
@@ -50,7 +48,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           styles.description,
           {
             fontFamily: Typography.fontFamily.regular,
-            color: colorPalette.textSecondary,
+            color: theme.textSecondary,
           }
         ]}
       >

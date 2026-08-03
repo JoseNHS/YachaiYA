@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, TextInput, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View, TextInput, StyleProp, ViewStyle, Pressable } from 'react-native';
+import { Search, X } from 'lucide-react-native';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
-import { ThemedText } from '../themed-text';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface SearchBarProps {
   value: string;
@@ -18,36 +18,39 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   style,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: colorPalette.backgroundElement,
-          borderColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
         },
         style
       ]}
     >
-      <ThemedText style={styles.searchIcon}>🔍</ThemedText>
+      <Search size={18} color={theme.textSecondary} style={styles.searchIcon} />
       <TextInput
         style={[
           styles.input,
           {
-            color: colorPalette.text,
+            color: theme.text,
             fontFamily: Typography.fontFamily.regular,
           }
         ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colorPalette.textSecondary}
+        placeholderTextColor={theme.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
       />
+      {value.length > 0 && (
+        <Pressable onPress={() => onChangeText('')} style={{ padding: Spacing.four }}>
+          <X size={16} color={theme.textSecondary} />
+        </Pressable>
+      )}
     </View>
   );
 };

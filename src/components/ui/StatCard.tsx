@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Shadows, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography, Shadows } from '@/constants/theme';
 
 export interface StatCardProps {
   title: string;
@@ -20,8 +20,6 @@ export const StatCard: React.FC<StatCardProps> = ({
   trendType = 'neutral',
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getTrendColor = () => {
     switch (trendType) {
@@ -30,7 +28,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       case 'negative':
         return '#EF4444';
       default:
-        return colorPalette.textSecondary;
+        return theme.textSecondary;
     }
   };
 
@@ -39,8 +37,8 @@ export const StatCard: React.FC<StatCardProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colorPalette.background,
-          borderColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
         },
         Shadows.sm
       ]}
@@ -51,7 +49,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             styles.title,
             {
               fontFamily: Typography.fontFamily.medium,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >
@@ -65,7 +63,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           styles.value,
           {
             fontFamily: Typography.fontFamily.bold,
-            color: colorPalette.text,
+            color: theme.text,
           }
         ]}
       >
@@ -91,7 +89,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: Radius.r12,
+    borderRadius: Radius.r20,
     borderWidth: 1,
     padding: Spacing.sixteen,
     minWidth: 140,

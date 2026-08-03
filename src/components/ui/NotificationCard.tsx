@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from './Card';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 
 export interface NotificationCardProps {
   title: string;
@@ -19,15 +19,13 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
   dateStr,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <Card
       style={[
         styles.card,
         !isRead && {
-          borderLeftColor: colorPalette.accent,
+          borderLeftColor: theme.accent,
           borderLeftWidth: 4,
         }
       ]}
@@ -38,7 +36,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
             styles.title,
             {
               fontFamily: Typography.fontFamily.semiBold,
-              color: colorPalette.text,
+              color: theme.text,
             }
           ]}
         >
@@ -49,7 +47,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
             styles.date,
             {
               fontFamily: Typography.fontFamily.regular,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >
@@ -62,7 +60,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
           styles.message,
           {
             fontFamily: Typography.fontFamily.regular,
-            color: colorPalette.textSecondary,
+            color: theme.textSecondary,
           }
         ]}
       >

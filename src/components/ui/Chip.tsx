@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Pressable, PressableProps } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface ChipProps extends PressableProps {
   label: string;
@@ -11,19 +11,17 @@ export interface ChipProps extends PressableProps {
 
 export const Chip: React.FC<ChipProps> = ({ label, selected = false, style, ...props }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: selected ? colorPalette.primary : colorPalette.backgroundElement,
-          borderColor: selected ? colorPalette.primary : colorPalette.border,
+          backgroundColor: selected ? theme.primary : theme.backgroundElement,
+          borderColor: selected ? theme.primary : theme.border,
           borderWidth: 1,
         },
-        pressed && { opacity: 0.85 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] },
         style as any
       ]}
       {...props}
@@ -32,7 +30,7 @@ export const Chip: React.FC<ChipProps> = ({ label, selected = false, style, ...p
         style={{
           fontSize: Typography.sizes.caption,
           fontFamily: selected ? Typography.fontFamily.semiBold : Typography.fontFamily.medium,
-          color: selected ? '#111111' : colorPalette.text,
+          color: selected ? '#FFFFFF' : theme.textSecondary,
         }}
       >
         {label}
@@ -43,9 +41,9 @@ export const Chip: React.FC<ChipProps> = ({ label, selected = false, style, ...p
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: Spacing.twelve,
-    paddingVertical: Spacing.six,
-    borderRadius: Radius.r20,
+    paddingHorizontal: Spacing.sixteen,
+    paddingVertical: Spacing.eight - 2,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.eight,
