@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Pressable, Modal, FlatList } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface SelectOption {
   label: string;
@@ -27,8 +27,6 @@ export const Select: React.FC<SelectProps> = ({
   error,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -42,7 +40,7 @@ export const Select: React.FC<SelectProps> = ({
             styles.label,
             {
               fontFamily: Typography.fontFamily.medium,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >
@@ -54,8 +52,8 @@ export const Select: React.FC<SelectProps> = ({
         style={[
           styles.selectTrigger,
           {
-            backgroundColor: colorPalette.backgroundElement,
-            borderColor: error ? '#EF4444' : colorPalette.border,
+            backgroundColor: theme.backgroundElement,
+            borderColor: error ? '#EF4444' : theme.border,
             borderWidth: 1.5,
           }
         ]}
@@ -64,13 +62,13 @@ export const Select: React.FC<SelectProps> = ({
         <ThemedText
           style={{
             fontFamily: Typography.fontFamily.regular,
-            color: selectedOption ? colorPalette.text : colorPalette.textSecondary,
+            color: selectedOption ? theme.text : theme.textSecondary,
             fontSize: Typography.sizes.body,
           }}
         >
           {selectedOption ? selectedOption.label : placeholder}
         </ThemedText>
-        <ThemedText style={{ color: colorPalette.textSecondary }}>▼</ThemedText>
+        <ThemedText style={{ color: theme.textSecondary }}>▼</ThemedText>
       </Pressable>
 
       {error && (
@@ -91,8 +89,8 @@ export const Select: React.FC<SelectProps> = ({
             style={[
               styles.modalContent,
               {
-                backgroundColor: colorPalette.background,
-                borderColor: colorPalette.border,
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
                 borderWidth: 1,
               }
             ]}
@@ -102,8 +100,8 @@ export const Select: React.FC<SelectProps> = ({
                 styles.modalHeader,
                 {
                   fontFamily: Typography.fontFamily.semiBold,
-                  borderBottomColor: colorPalette.border,
-                  color: colorPalette.text,
+                  borderBottomColor: theme.border,
+                  color: theme.text,
                 }
               ]}
             >
@@ -120,10 +118,10 @@ export const Select: React.FC<SelectProps> = ({
                     style={[
                       styles.optionItem,
                       {
-                        borderBottomColor: colorPalette.border,
+                        borderBottomColor: theme.border,
                       },
                       isSelected && {
-                        backgroundColor: colorPalette.backgroundElement,
+                        backgroundColor: theme.backgroundSelected,
                       }
                     ]}
                     onPress={() => {
@@ -136,7 +134,7 @@ export const Select: React.FC<SelectProps> = ({
                         fontFamily: isSelected
                           ? Typography.fontFamily.semiBold
                           : Typography.fontFamily.regular,
-                        color: isSelected ? colorPalette.primary : colorPalette.text,
+                        color: isSelected ? theme.primary : theme.text,
                         fontSize: Typography.sizes.body,
                       }}
                     >

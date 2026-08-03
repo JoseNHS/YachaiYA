@@ -15,14 +15,14 @@ export const Colors = {
     black: '#111111',
   },
   dark: {
-    text: '#FFFFFF',
-    background: '#111111',
-    backgroundElement: '#222222',
-    backgroundSelected: '#333333',
-    textSecondary: '#B0B4BA',
+    text: '#111111',
+    background: '#F2F2F2',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#E6E6E6',
+    textSecondary: '#60646C',
     primary: '#6CC6FF',
     accent: '#FF1493',
-    border: '#333333',
+    border: '#E6E6E6',
     white: '#FFFFFF',
     black: '#111111',
   },
@@ -42,15 +42,16 @@ export const Typography = {
     h1: 24,
     h2: 20,
     h3: 16,
-    body: 14,
-    caption: 12,
-    small: 10,
+    body: 15,
+    caption: 13,
+    small: 11,
   },
 } as const;
 
 export const Spacing = {
   four: 4,
   eight: 8,
+  ten: 10,
   twelve: 12,
   sixteen: 16,
   twenty: 20,
@@ -78,6 +79,7 @@ export const Radius = {
   r20: 20,
   r24: 24,
   r32: 32,
+  full: 9999,
 } as const;
 
 export const Shadows = {

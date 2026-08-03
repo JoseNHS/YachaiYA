@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -12,8 +12,6 @@ import { Card } from '@/components/ui/Card';
 export default function LoginScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const { signInWithEmail, isDemoMode } = useAuth();
 
@@ -50,10 +48,10 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: colorPalette.background }}
+      style={{ flex: 1, backgroundColor: theme.background }}
     >
       <ScrollView
-        style={[styles.container, { backgroundColor: colorPalette.background }]}
+        style={[styles.container, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -64,7 +62,7 @@ export default function LoginScreen() {
               styles.logo,
               {
                 fontFamily: Typography.fontFamily.bold,
-                color: colorPalette.primary, // Celeste logo!
+                color: theme.primary, // Celeste logo!
               }
             ]}
           >
@@ -75,7 +73,7 @@ export default function LoginScreen() {
               styles.title,
               {
                 fontFamily: Typography.fontFamily.semiBold,
-                color: colorPalette.text,
+                color: theme.text,
               }
             ]}
           >
@@ -86,7 +84,7 @@ export default function LoginScreen() {
               styles.subtitle,
               {
                 fontFamily: Typography.fontFamily.regular,
-                color: colorPalette.textSecondary,
+                color: theme.textSecondary,
               }
             ]}
           >
@@ -143,7 +141,7 @@ export default function LoginScreen() {
                 styles.demoTitle,
                 {
                   fontFamily: Typography.fontFamily.semiBold,
-                  color: colorPalette.accent, // fucsia emphasis
+                  color: theme.accent, // fucsia emphasis
                 }
               ]}
             >
@@ -154,7 +152,7 @@ export default function LoginScreen() {
                 styles.demoText,
                 {
                   fontFamily: Typography.fontFamily.regular,
-                  color: colorPalette.textSecondary,
+                  color: theme.textSecondary,
                 }
               ]}
             >
@@ -165,7 +163,7 @@ export default function LoginScreen() {
                 styles.demoDetails,
                 {
                   fontFamily: Typography.fontFamily.regular,
-                  color: colorPalette.textSecondary,
+                  color: theme.textSecondary,
                 }
               ]}
             >

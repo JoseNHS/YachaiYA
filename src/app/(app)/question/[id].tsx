@@ -15,7 +15,7 @@ import { questionService } from '@/services/questionService';
 import { answerService } from '@/services/answerService';
 import { Question, Answer } from '@/types/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { Spacing, Colors, Typography, Radius } from '@/constants/theme';
+import { Spacing, Typography, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { Modal } from '@/components/ui/Modal';
@@ -24,8 +24,6 @@ import { Button } from '@/components/ui/Button';
 export default function QuestionDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
   const { user, refreshProfile } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -254,17 +252,17 @@ export default function QuestionDetailScreen() {
   });
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colorPalette.background }]}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         
         {/* Detail Header */}
-        <View style={[styles.header, { backgroundColor: colorPalette.backgroundElement, borderBottomColor: colorPalette.border }]}>
+        <View style={[styles.header, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border }]}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ThemedText style={[styles.backBtnText, { color: colorPalette.primary, fontFamily: Typography.fontFamily.semiBold }]}>
+            <ThemedText style={[styles.backBtnText, { color: theme.primary, fontFamily: Typography.fontFamily.semiBold }]}>
               ← Volver
             </ThemedText>
           </Pressable>
-          <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+          <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
             Detalle del Ejercicio
           </ThemedText>
           <View style={{ width: 60 }} />
@@ -295,7 +293,7 @@ export default function QuestionDetailScreen() {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorPalette.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
           }
         />
 
@@ -309,10 +307,10 @@ export default function QuestionDetailScreen() {
           title="Aceptar esta respuesta"
         >
           <View style={{ gap: Spacing.sixteen }}>
-            <ThemedText style={{ fontSize: 14, fontFamily: Typography.fontFamily.regular, color: colorPalette.text, lineHeight: 20 }}>
-              Esta acción transferirá automáticamente la recompensa de <ThemedText style={{ fontFamily: Typography.fontFamily.bold, color: colorPalette.accent }}>🪙{question.reward_tokens} tokens</ThemedText> al docente y cerrará la pregunta permanentemente.
+            <ThemedText style={{ fontSize: 14, fontFamily: Typography.fontFamily.regular, color: theme.text, lineHeight: 20 }}>
+              Esta acción transferirá automáticamente la recompensa de <ThemedText style={{ fontFamily: Typography.fontFamily.bold, color: theme.accent }}>🪙{question.reward_tokens} tokens</ThemedText> al docente y cerrará la pregunta permanentemente.
             </ThemedText>
-            <ThemedText style={{ fontSize: 13, fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }}>
+            <ThemedText style={{ fontSize: 13, fontFamily: Typography.fontFamily.semiBold, color: theme.text }}>
               ¿Deseas continuar?
             </ThemedText>
             <View style={{ flexDirection: 'row', gap: Spacing.twelve, marginTop: Spacing.eight }}>

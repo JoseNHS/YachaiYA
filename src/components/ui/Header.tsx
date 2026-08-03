@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, Image } from 'react-native';
+import { StyleSheet, View, Image, Pressable } from 'react-native';
+import { Bell } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Avatar } from './Avatar';
-import { IconButton } from './IconButton';
 
 export interface HeaderProps {
   onNotificationPress?: () => void;
@@ -14,25 +14,22 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onNotificationPress }) => {
   const { user } = useAuth();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
-
-  const roleLabel = user?.role === 'alumno' ? '🎒 Alumno' : '👨‍🏫 Docente';
+  const roleLabel = user?.role === 'alumno' ? '🎓 Alumno' : '👨‍🏫 Docente';
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: colorPalette.backgroundElement,
-          borderBottomColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderBottomColor: theme.border,
         }
       ]}
     >
       <View style={styles.leftRow}>
         <Image
-          source={require('@/assets/images/react-logo.png')} // Fallback asset or logo
+          source={require('@/assets/images/icon.png')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -42,18 +39,18 @@ export const Header: React.FC<HeaderProps> = ({ onNotificationPress }) => {
               styles.greeting,
               {
                 fontFamily: Typography.fontFamily.semiBold,
-                color: colorPalette.text,
+                color: theme.text,
               }
             ]}
           >
-            Hola, {user?.full_name?.split(' ')[0] || 'Estudiante'}
+            {user?.full_name?.split(' ')[0] || 'Estudiante'}
           </ThemedText>
           <ThemedText
             style={[
               styles.role,
               {
                 fontFamily: Typography.fontFamily.medium,
-                color: colorPalette.textSecondary,
+                color: theme.textSecondary,
               }
             ]}
           >
@@ -63,13 +60,17 @@ export const Header: React.FC<HeaderProps> = ({ onNotificationPress }) => {
       </View>
 
       <View style={styles.rightRow}>
-        <IconButton
-          icon="🔔"
-          variant="outline"
-          size="md"
+        <Pressable
           onPress={onNotificationPress}
-          style={styles.notificationBtn}
-        />
+          style={({ pressed }) => [
+            styles.notificationBtn,
+            { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+            pressed && { opacity: 0.7 }
+          ]}
+        >
+          <Bell size={18} color={theme.textSecondary} />
+        </Pressable>
+
         <Avatar
           name={user?.full_name || 'Estudiante'}
           size="s"
@@ -85,38 +86,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.sixteen,
-    paddingVertical: Spacing.twelve,
     borderBottomWidth: 1,
-    height: 72,
+    height: 56,
   },
   leftRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.twelve,
+    gap: Spacing.ten,
   },
   logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
   },
   textContainer: {
     justifyContent: 'center',
   },
   greeting: {
-    fontSize: Typography.sizes.body + 1,
+    fontSize: Typography.sizes.body,
     lineHeight: 18,
   },
   role: {
-    fontSize: Typography.sizes.caption,
+    fontSize: Typography.sizes.caption - 1,
     lineHeight: 14,
-    marginTop: 2,
   },
   rightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.eight,
+    gap: Spacing.twelve,
   },
   notificationBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

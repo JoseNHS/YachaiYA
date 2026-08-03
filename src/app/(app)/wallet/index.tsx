@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { walletService } from '@/services/walletService';
@@ -15,8 +15,6 @@ export default function WalletScreen() {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,16 +64,16 @@ export default function WalletScreen() {
   const recentTransactions = transactions.slice(0, 3);
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colorPalette.background }]}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: colorPalette.backgroundElement, borderBottomColor: colorPalette.border }]}>
+        <View style={[styles.header, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border }]}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ThemedText style={[styles.backBtnText, { color: colorPalette.primary, fontFamily: Typography.fontFamily.semiBold }]}>
+            <ThemedText style={[styles.backBtnText, { color: theme.primary, fontFamily: Typography.fontFamily.semiBold }]}>
               ← Volver
             </ThemedText>
           </Pressable>
-          <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+          <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
             Mi Billetera
           </ThemedText>
           <View style={{ width: 60 }} />
@@ -85,31 +83,31 @@ export default function WalletScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorPalette.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
           }
         >
           {/* Balance Card */}
           <Card style={styles.balanceCard}>
-            <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Saldo Disponible
             </ThemedText>
-            <ThemedText style={[styles.balanceValue, { color: colorPalette.text, fontFamily: Typography.fontFamily.bold }]}>
-              🪙 {user?.tokens ?? 0} <ThemedText style={{ fontSize: 20, color: colorPalette.textSecondary }}>Tokens</ThemedText>
+            <ThemedText style={[styles.balanceValue, { color: theme.text, fontFamily: Typography.fontFamily.bold }]}>
+              🪙 {user?.tokens ?? 0} <ThemedText style={{ fontSize: 20, color: theme.textSecondary }}>Tokens</ThemedText>
             </ThemedText>
 
-            <View style={[styles.divider, { backgroundColor: colorPalette.border }]} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
             <View style={styles.statsRow}>
               <View style={styles.statCol}>
-                <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 11 }}>Reputación</ThemedText>
-                <ThemedText style={{ fontSize: 16, fontFamily: Typography.fontFamily.semiBold, color: colorPalette.accent, marginTop: 2 }}>
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 11 }}>Reputación</ThemedText>
+                <ThemedText style={{ fontSize: 16, fontFamily: Typography.fontFamily.semiBold, color: theme.accent, marginTop: 2 }}>
                   ⭐ {user?.reputation ?? 0} Puntos
                 </ThemedText>
               </View>
-              <View style={[styles.verticalDivider, { backgroundColor: colorPalette.border }]} />
+              <View style={[styles.verticalDivider, { backgroundColor: theme.border }]} />
               <View style={styles.statCol}>
-                <ThemedText style={{ color: colorPalette.textSecondary, fontSize: 11 }}>Rol Activo</ThemedText>
-                <ThemedText style={{ fontSize: 16, fontFamily: Typography.fontFamily.semiBold, color: colorPalette.primary, marginTop: 2, textTransform: 'capitalize' }}>
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 11 }}>Rol Activo</ThemedText>
+                <ThemedText style={{ fontSize: 16, fontFamily: Typography.fontFamily.semiBold, color: theme.primary, marginTop: 2, textTransform: 'capitalize' }}>
                   {user?.role === 'alumno' ? '🎒 Alumno' : '👨‍🏫 Docente'}
                 </ThemedText>
               </View>
@@ -119,32 +117,32 @@ export default function WalletScreen() {
           {/* Cashflow Card (Income vs Expenses) */}
           <Card style={styles.cashflowCard}>
             <View style={styles.cashflowItem}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Total Ingresos</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Total Ingresos</ThemedText>
               <ThemedText style={{ color: '#10B981', fontFamily: Typography.fontFamily.semiBold, fontSize: 18, marginTop: 2 }}>
                 +🪙 {income}
               </ThemedText>
             </View>
-            <View style={[styles.verticalDivider, { backgroundColor: colorPalette.border }]} />
+            <View style={[styles.verticalDivider, { backgroundColor: theme.border }]} />
             <View style={styles.cashflowItem}>
-              <ThemedText style={{ color: colorPalette.textSecondary, fontSize: Typography.sizes.caption }}>Total Gastos</ThemedText>
-              <ThemedText style={{ color: colorPalette.accent, fontFamily: Typography.fontFamily.semiBold, fontSize: 18, marginTop: 2 }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Total Gastos</ThemedText>
+              <ThemedText style={{ color: theme.accent, fontFamily: Typography.fontFamily.semiBold, fontSize: 18, marginTop: 2 }}>
                 -🪙 {expenses}
               </ThemedText>
             </View>
           </Card>
 
           {/* Recargar tokens Próximamente */}
-          <Card style={[styles.reloadCard, { borderColor: colorPalette.border }]}>
+          <Card style={[styles.reloadCard, { borderColor: theme.border }]}>
             <View style={{ flex: 1 }}>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 14, color: colorPalette.text }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 14, color: theme.text }}>
                 Recargar Tokens
               </ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: 11, color: colorPalette.textSecondary, marginTop: 2 }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: 11, color: theme.textSecondary, marginTop: 2 }}>
                 Obtén más tokens para publicar más preguntas y obtener respuestas más rápido.
               </ThemedText>
             </View>
-            <View style={[styles.soonBadge, { backgroundColor: colorPalette.border }]}>
-              <ThemedText style={{ fontSize: 9, fontFamily: Typography.fontFamily.semiBold, color: colorPalette.textSecondary }}>
+            <View style={[styles.soonBadge, { backgroundColor: theme.border }]}>
+              <ThemedText style={{ fontSize: 9, fontFamily: Typography.fontFamily.semiBold, color: theme.textSecondary }}>
                 PRÓXIMAMENTE
               </ThemedText>
             </View>
@@ -152,12 +150,12 @@ export default function WalletScreen() {
 
           {/* Recent Activity section */}
           <View style={styles.sectionHeader}>
-            <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+            <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
               Actividad Reciente
             </ThemedText>
             {transactions.length > 3 && (
               <Pressable onPress={() => router.push('/(app)/wallet/history' as any)}>
-                <ThemedText style={{ fontSize: 12, color: colorPalette.primary, fontFamily: Typography.fontFamily.medium }}>
+                <ThemedText style={{ fontSize: 12, color: theme.primary, fontFamily: Typography.fontFamily.medium }}>
                   Ver todo
                 </ThemedText>
               </Pressable>
@@ -166,12 +164,12 @@ export default function WalletScreen() {
 
           {loading ? (
             <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
-              <ThemedText style={{ color: colorPalette.textSecondary }}>Cargando transacciones...</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary }}>Cargando transacciones...</ThemedText>
             </Card>
           ) : recentTransactions.length === 0 ? (
             <Card style={styles.emptyCard}>
               <ThemedText style={{ fontSize: 24, marginBottom: Spacing.eight }}>💸</ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: colorPalette.textSecondary, textAlign: 'center' }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: theme.textSecondary, textAlign: 'center' }}>
                 Sin transacciones registradas todavía
               </ThemedText>
             </Card>
@@ -180,18 +178,18 @@ export default function WalletScreen() {
               {recentTransactions.map((tx) => {
                 const isIncoming = tx.receiver_id === user?.id;
                 const sign = isIncoming ? '+' : '-';
-                const amountColor = isIncoming ? '#10B981' : colorPalette.accent;
+                const amountColor = isIncoming ? '#10B981' : theme.accent;
 
                 return (
                   <Card key={tx.id} style={styles.txItem}>
                     <View style={{ flex: 1 }}>
-                      <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: colorPalette.text }}>
+                      <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: theme.text }}>
                         {tx.question_title}
                       </ThemedText>
-                      <ThemedText style={{ fontSize: 10, color: colorPalette.textSecondary, marginTop: 2 }}>
+                      <ThemedText style={{ fontSize: 10, color: theme.textSecondary, marginTop: 2 }}>
                         {tx.transaction_type === 'publish_question' ? '📌 Ejercicio Publicado' : '🏆 Solución Aceptada'}
                       </ThemedText>
-                      <ThemedText style={{ fontSize: 9, color: colorPalette.textSecondary, marginTop: 4 }}>
+                      <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginTop: 4 }}>
                         {new Date(tx.created_at).toLocaleDateString()}
                       </ThemedText>
                     </View>

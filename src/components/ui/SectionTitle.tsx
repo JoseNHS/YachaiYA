@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 
 export interface SectionTitleProps {
   title: string;
@@ -16,8 +16,6 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
   align = 'left',
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <ThemedText
@@ -26,7 +24,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
         {
           textAlign: align,
           fontFamily: Typography.fontFamily.semiBold,
-          color: colorPalette.text,
+          color: theme.text,
         }
       ]}
     >
@@ -37,7 +35,7 @@ export const SectionTitle: React.FC<SectionTitleProps> = ({
             styles.subtitle,
             {
               fontFamily: Typography.fontFamily.regular,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >

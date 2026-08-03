@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Modal as RNModal, View, Pressable, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Colors } from '@/constants/theme';
+import { Spacing, Radius } from '@/constants/theme';
 import { Card } from './Card';
 import { ThemedText } from '../themed-text';
 
@@ -21,8 +21,6 @@ export const Modal: React.FC<ModalProps> = ({
   containerStyle,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <RNModal
@@ -38,8 +36,8 @@ export const Modal: React.FC<ModalProps> = ({
               style={[
                 styles.modalView,
                 {
-                  backgroundColor: colorPalette.backgroundElement,
-                  borderColor: colorPalette.border,
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.border,
                 },
                 containerStyle
               ]}
@@ -50,7 +48,7 @@ export const Modal: React.FC<ModalProps> = ({
                     {title}
                   </ThemedText>
                   <Pressable onPress={onClose} style={styles.closeBtn}>
-                    <ThemedText style={{ color: colorPalette.textSecondary, fontWeight: 'bold' }}>
+                    <ThemedText style={{ color: theme.textSecondary, fontWeight: 'bold' }}>
                       ✕
                     </ThemedText>
                   </Pressable>

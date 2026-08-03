@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface ReputationProps {
   score: number;
@@ -10,8 +10,6 @@ export interface ReputationProps {
 
 export const Reputation: React.FC<ReputationProps> = ({ score }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getRankInfo = () => {
     if (score >= 500) return { title: 'Leyenda', icon: '🏆', color: '#F59E0B' };
@@ -28,8 +26,8 @@ export const Reputation: React.FC<ReputationProps> = ({ score }) => {
       style={[
         styles.container,
         {
-          backgroundColor: colorPalette.backgroundElement,
-          borderColor: colorPalette.border,
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
         }
       ]}
     >
@@ -51,7 +49,7 @@ export const Reputation: React.FC<ReputationProps> = ({ score }) => {
             styles.scoreText,
             {
               fontFamily: Typography.fontFamily.medium,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >

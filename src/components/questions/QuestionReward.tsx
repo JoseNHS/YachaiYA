@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Coins } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface QuestionRewardProps {
   amount: number;
@@ -10,26 +11,24 @@ export interface QuestionRewardProps {
 
 export const QuestionReward: React.FC<QuestionRewardProps> = ({ amount }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: 'rgba(255, 20, 147, 0.08)',
-          borderColor: colorPalette.accent,
+          backgroundColor: 'rgba(108, 198, 255, 0.12)',
+          borderColor: theme.primary,
         }
       ]}
     >
-      <ThemedText style={styles.icon}>💰</ThemedText>
+      <Coins size={14} color="#0284C7" style={{ marginRight: Spacing.four }} />
       <ThemedText
         style={[
           styles.text,
           {
             fontFamily: Typography.fontFamily.semiBold,
-            color: colorPalette.accent,
+            color: '#0284C7',
           }
         ]}
       >
@@ -43,15 +42,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.eight,
+    paddingHorizontal: Spacing.ten,
     paddingVertical: Spacing.four,
-    borderRadius: Radius.r20,
+    borderRadius: Radius.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
-  },
-  icon: {
-    fontSize: 12,
-    marginRight: Spacing.four,
   },
   text: {
     fontSize: Typography.sizes.caption,

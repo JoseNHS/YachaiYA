@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types/auth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -13,8 +13,6 @@ import { Card } from '@/components/ui/Card';
 export default function RegisterScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const { signUpWithEmail } = useAuth();
 
@@ -53,17 +51,17 @@ export default function RegisterScreen() {
   };
 
   const roleOptions: { value: 'alumno' | 'docente'; label: string; emoji: string; desc: string; activeColor: string }[] = [
-    { value: 'alumno', label: 'Alumno', emoji: '🎒', desc: 'Publica ejercicios matemáticos ofreciendo tokens de recompensa.', activeColor: colorPalette.primary },
-    { value: 'docente', label: 'Docente / Experto', emoji: '🎓', desc: 'Resuelve problemas complejos y gana tokens y reputación.', activeColor: colorPalette.accent },
+    { value: 'alumno', label: 'Alumno', emoji: '🎒', desc: 'Publica ejercicios matemáticos ofreciendo tokens de recompensa.', activeColor: theme.primary },
+    { value: 'docente', label: 'Docente / Experto', emoji: '🎓', desc: 'Resuelve problemas complejos y gana tokens y reputación.', activeColor: theme.accent },
   ];
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: colorPalette.background }}
+      style={{ flex: 1, backgroundColor: theme.background }}
     >
       <ScrollView
-        style={[styles.container, { backgroundColor: colorPalette.background }]}
+        style={[styles.container, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -74,7 +72,7 @@ export default function RegisterScreen() {
               styles.logo,
               {
                 fontFamily: Typography.fontFamily.bold,
-                color: colorPalette.primary,
+                color: theme.primary,
               }
             ]}
           >
@@ -85,7 +83,7 @@ export default function RegisterScreen() {
               styles.title,
               {
                 fontFamily: Typography.fontFamily.semiBold,
-                color: colorPalette.text,
+                color: theme.text,
               }
             ]}
           >
@@ -96,7 +94,7 @@ export default function RegisterScreen() {
               styles.subtitle,
               {
                 fontFamily: Typography.fontFamily.regular,
-                color: colorPalette.textSecondary,
+                color: theme.textSecondary,
               }
             ]}
           >
@@ -144,7 +142,7 @@ export default function RegisterScreen() {
                 styles.label,
                 {
                   fontFamily: Typography.fontFamily.medium,
-                  color: colorPalette.textSecondary,
+                  color: theme.textSecondary,
                   marginBottom: Spacing.eight,
                 }
               ]}
@@ -154,8 +152,8 @@ export default function RegisterScreen() {
             <View style={styles.roleGrid}>
               {roleOptions.map((option) => {
                 const isSelected = role === option.value;
-                const activeBg = isSelected ? (option.value === 'alumno' ? 'rgba(108, 198, 255, 0.08)' : 'rgba(255, 20, 147, 0.08)') : colorPalette.backgroundElement;
-                const borderClr = isSelected ? option.activeColor : colorPalette.border;
+                const activeBg = isSelected ? (option.value === 'alumno' ? 'rgba(108, 198, 255, 0.08)' : 'rgba(255, 20, 147, 0.08)') : theme.backgroundElement;
+                const borderClr = isSelected ? option.activeColor : theme.border;
 
                 return (
                   <Pressable
@@ -177,7 +175,7 @@ export default function RegisterScreen() {
                           styles.roleLabel,
                           {
                             fontFamily: Typography.fontFamily.semiBold,
-                            color: isSelected ? option.activeColor : colorPalette.text,
+                            color: isSelected ? option.activeColor : theme.text,
                           }
                         ]}
                       >
@@ -188,7 +186,7 @@ export default function RegisterScreen() {
                           styles.roleDesc,
                           {
                             fontFamily: Typography.fontFamily.regular,
-                            color: colorPalette.textSecondary,
+                            color: theme.textSecondary,
                           }
                         ]}
                       >

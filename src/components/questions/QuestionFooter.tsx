@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { MessageSquare } from 'lucide-react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 
 export interface QuestionFooterProps {
   answersCount: number;
@@ -10,19 +11,17 @@ export interface QuestionFooterProps {
 
 export const QuestionFooter: React.FC<QuestionFooterProps> = ({ answersCount }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View style={styles.container}>
       <View style={styles.metric}>
-        <ThemedText style={styles.icon}>💬</ThemedText>
+        <MessageSquare size={15} color={theme.textSecondary} style={{ marginRight: Spacing.eight }} />
         <ThemedText
           style={[
             styles.text,
             {
               fontFamily: Typography.fontFamily.medium,
-              color: colorPalette.textSecondary,
+              color: theme.textSecondary,
             }
           ]}
         >

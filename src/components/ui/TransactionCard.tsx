@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from './Card';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface TransactionCardProps {
   description: string;
@@ -21,8 +21,6 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   dateStr,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getAmountColor = () => {
     switch (type) {
@@ -32,7 +30,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
       case 'publish_question':
         return '#EF4444'; // Red (Deductions)
       default:
-        return colorPalette.text;
+        return theme.text;
     }
   };
 
@@ -65,7 +63,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
               styles.description,
               {
                 fontFamily: Typography.fontFamily.semiBold,
-                color: colorPalette.text,
+                color: theme.text,
               }
             ]}
           >
@@ -76,7 +74,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
               styles.date,
               {
                 fontFamily: Typography.fontFamily.regular,
-                color: colorPalette.textSecondary,
+                color: theme.textSecondary,
               }
             ]}
           >

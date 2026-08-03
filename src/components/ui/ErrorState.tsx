@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography, Colors } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { Card } from './Card';
 import { Button } from './Button';
 
@@ -16,8 +16,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <Card style={styles.card}>
@@ -27,7 +25,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           styles.title,
           {
             fontFamily: Typography.fontFamily.semiBold,
-            color: colorPalette.text,
+            color: theme.text,
           }
         ]}
       >
@@ -38,7 +36,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           styles.text,
           {
             fontFamily: Typography.fontFamily.regular,
-            color: colorPalette.textSecondary,
+            color: theme.textSecondary,
           }
         ]}
       >

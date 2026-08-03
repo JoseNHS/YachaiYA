@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 import { Card } from '@/components/ui/Card';
 import { walletService } from '@/services/walletService';
 
@@ -14,8 +14,6 @@ export default function WalletHistoryScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +52,7 @@ export default function WalletHistoryScreen() {
       case 'cancelled':
         return '#EF4444';
       default:
-        return colorPalette.textSecondary;
+        return theme.textSecondary;
     }
   };
 
@@ -87,17 +85,17 @@ export default function WalletHistoryScreen() {
   };
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colorPalette.background }]}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: colorPalette.backgroundElement, borderBottomColor: colorPalette.border }]}>
+        <View style={[styles.header, { backgroundColor: theme.backgroundElement, borderBottomColor: theme.border }]}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <ThemedText style={[styles.backBtnText, { color: colorPalette.primary, fontFamily: Typography.fontFamily.semiBold }]}>
+            <ThemedText style={[styles.backBtnText, { color: theme.primary, fontFamily: Typography.fontFamily.semiBold }]}>
               ← Volver
             </ThemedText>
           </Pressable>
           <View style={{ flex: 1, alignItems: 'center', marginRight: 60 }}>
-            <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+            <ThemedText style={[styles.headerTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
               Historial de Transacciones
             </ThemedText>
           </View>
@@ -109,31 +107,31 @@ export default function WalletHistoryScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colorPalette.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
           }
           ListEmptyComponent={
             !loading ? (
               <Card style={styles.emptyCard}>
                 <ThemedText style={{ fontSize: 32, marginBottom: Spacing.twelve }}>💸</ThemedText>
-                <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: colorPalette.textSecondary, textAlign: 'center' }}>
+                <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: theme.textSecondary, textAlign: 'center' }}>
                   Aún no tienes movimientos registrados en tu cuenta.
                 </ThemedText>
               </Card>
             ) : (
               <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
-                <ThemedText style={{ color: colorPalette.textSecondary }}>Cargando historial...</ThemedText>
+                <ThemedText style={{ color: theme.textSecondary }}>Cargando historial...</ThemedText>
               </Card>
             )
           }
           renderItem={({ item }) => {
             const isIncoming = item.receiver_id === user?.id;
             const sign = isIncoming ? '+' : '-';
-            const amountColor = isIncoming ? '#10B981' : colorPalette.accent;
+            const amountColor = isIncoming ? '#10B981' : theme.accent;
 
             return (
               <Card style={styles.txCard}>
                 <View style={styles.txHeader}>
-                  <ThemedText style={{ fontSize: 10, color: colorPalette.textSecondary }}>
+                  <ThemedText style={{ fontSize: 10, color: theme.textSecondary }}>
                     {new Date(item.created_at).toLocaleString()}
                   </ThemedText>
                   <View style={[styles.statusBadge, { borderColor: getStatusColor(item.status) }]}>
@@ -144,23 +142,23 @@ export default function WalletHistoryScreen() {
                   </View>
                 </View>
 
-                <ThemedText style={[styles.txTitle, { fontFamily: Typography.fontFamily.semiBold, color: colorPalette.text }]}>
+                <ThemedText style={[styles.txTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
                   {item.question_title}
                 </ThemedText>
 
-                <ThemedText style={{ fontSize: 11, color: colorPalette.textSecondary, marginTop: Spacing.four }}>
+                <ThemedText style={{ fontSize: 11, color: theme.textSecondary, marginTop: Spacing.four }}>
                   {getTransactionTypeLabel(item.transaction_type)}
                 </ThemedText>
 
-                <View style={[styles.divider, { backgroundColor: colorPalette.border }]} />
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
                 <View style={styles.txFooter}>
                   <View style={{ flex: 1 }}>
-                    <ThemedText style={{ fontSize: 10, color: colorPalette.textSecondary }}>
-                      De: <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: colorPalette.text }}>{item.sender_name}</ThemedText>
+                    <ThemedText style={{ fontSize: 10, color: theme.textSecondary }}>
+                      De: <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: theme.text }}>{item.sender_name}</ThemedText>
                     </ThemedText>
-                    <ThemedText style={{ fontSize: 10, color: colorPalette.textSecondary, marginTop: 2 }}>
-                      Para: <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: colorPalette.text }}>{item.receiver_name}</ThemedText>
+                    <ThemedText style={{ fontSize: 10, color: theme.textSecondary, marginTop: 2 }}>
+                      Para: <ThemedText style={{ fontFamily: Typography.fontFamily.medium, color: theme.text }}>{item.receiver_name}</ThemedText>
                     </ThemedText>
                   </View>
                   <ThemedText style={{ fontSize: 16, fontFamily: Typography.fontFamily.bold, color: amountColor }}>

@@ -1,7 +1,8 @@
 import React from 'react';
 import { FlatList, RefreshControl, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Question } from '../types/auth';
-import { QuestionCard } from './QuestionCard';
+import { QuestionCard } from './questions/QuestionCard';
 import { QuestionEmptyState } from './QuestionEmptyState';
 import { QuestionLoading } from './QuestionLoading';
 import { Spacing } from '../constants/theme';
@@ -25,6 +26,8 @@ export function QuestionList({
   error,
   onRetry
 }: QuestionListProps) {
+  const router = useRouter();
+
   if (loading && questions.length === 0) {
     return <QuestionLoading />;
   }
@@ -43,7 +46,15 @@ export function QuestionList({
   }
 
   const renderItem = ({ item }: { item: Question }) => (
-    <QuestionCard question={item} role={role} />
+    <QuestionCard
+      question={item}
+      onPress={() => {
+        router.push({
+          pathname: '/(app)/question/[id]',
+          params: { id: item.id }
+        } as any);
+      }}
+    />
   );
 
   const handleEmpty = () => {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Animated, Pressable } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface TokenChipProps {
   amount: number;
@@ -11,8 +11,6 @@ export interface TokenChipProps {
 
 export const TokenChip: React.FC<TokenChipProps> = ({ amount, onPress }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const [scaleValue] = useState(() => new Animated.Value(1));
 
@@ -41,7 +39,7 @@ export const TokenChip: React.FC<TokenChipProps> = ({ amount, onPress }) => {
           styles.container,
           {
             backgroundColor: 'rgba(108, 198, 255, 0.12)',
-            borderColor: colorPalette.primary,
+            borderColor: theme.primary,
             transform: [{ scale: scaleValue }],
           }
         ]}
@@ -52,7 +50,7 @@ export const TokenChip: React.FC<TokenChipProps> = ({ amount, onPress }) => {
             styles.text,
             {
               fontFamily: Typography.fontFamily.semiBold,
-              color: colorPalette.primary,
+              color: theme.primary,
             }
           ]}
         >

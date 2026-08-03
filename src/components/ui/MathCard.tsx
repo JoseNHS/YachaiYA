@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography, Shadows, Colors } from '@/constants/theme';
+import { Spacing, Radius, Typography, Shadows } from '@/constants/theme';
 
 export interface MathCardProps extends ViewProps {
   title?: string;
@@ -10,16 +10,14 @@ export interface MathCardProps extends ViewProps {
 
 export const MathCard: React.FC<MathCardProps> = ({ title, children, style, ...props }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#1C1D21' : '#F8FAFC',
-          borderColor: isDark ? '#2E3035' : '#E2E8F0',
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
         },
         Shadows.xs,
         style
@@ -32,8 +30,8 @@ export const MathCard: React.FC<MathCardProps> = ({ title, children, style, ...p
             styles.title,
             {
               fontFamily: Typography.fontFamily.semiBold,
-              color: colorPalette.textSecondary,
-              borderBottomColor: isDark ? '#2E3035' : '#E2E8F0',
+              color: theme.textSecondary,
+              borderBottomColor: theme.border,
             }
           ]}
         >

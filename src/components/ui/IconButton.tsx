@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { useTheme } from '@/hooks/use-theme';
-import { Radius, Colors } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
 
 export interface IconButtonProps extends PressableProps {
   icon: string;
@@ -20,31 +20,29 @@ export const IconButton: React.FC<IconButtonProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const isDark = theme.text === '#FFFFFF';
-  const colorPalette = isDark ? Colors.dark : Colors.light;
 
   const getStyles = () => {
     const bgStyle: ViewStyle = {};
-    let iconColor = colorPalette.text;
+    let iconColor: string = theme.text;
 
     switch (variant) {
       case 'primary':
-        bgStyle.backgroundColor = colorPalette.primary;
+        bgStyle.backgroundColor = theme.primary;
         iconColor = '#111111';
         break;
       case 'secondary':
-        bgStyle.backgroundColor = colorPalette.accent;
+        bgStyle.backgroundColor = theme.accent;
         iconColor = '#FFFFFF';
         break;
       case 'outline':
         bgStyle.backgroundColor = 'transparent';
         bgStyle.borderWidth = 1.5;
-        bgStyle.borderColor = colorPalette.border;
-        iconColor = colorPalette.text;
+        bgStyle.borderColor = theme.border;
+        iconColor = theme.text;
         break;
       case 'ghost':
         bgStyle.backgroundColor = 'transparent';
-        iconColor = colorPalette.text;
+        iconColor = theme.text;
         break;
     }
 
