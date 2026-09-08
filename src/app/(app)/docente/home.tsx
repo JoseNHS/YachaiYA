@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Pressable, View, FlatList, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GraduationCap, Bell, Sparkles, CheckCircle2, Clock } from 'lucide-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing, Radius, Typography, MaxContentWidth } from '@/constants/theme';
 import { QuestionCard } from '@/components/questions/QuestionCard';
 import { QuestionSkeleton } from '@/components/questions/QuestionSkeleton';
-import { EmptyQuestions } from '@/components/questions/EmptyQuestions';
 import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +17,8 @@ import { Card } from '@/components/ui/Card';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Header } from '@/components/ui/Header';
 import { BottomNavigation } from '@/components/ui/BottomNavigation';
-import { WalletCard } from '@/components/ui/WalletCard';
+import { DocenteSummaryCard } from '@/components/ui/DocenteSummaryCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { answerService } from '@/services/answerService';
 import { notificationService } from '@/services/notificationService';
@@ -62,6 +63,7 @@ export default function DocenteHomeScreen() {
 
   useFocusEffect(triggerFocusRefresh);
 
+  // Fetch teacher's notifications when tab active
   useEffect(() => {
     if (activeTab === 'notificaciones' && user?.id) {
       setLoadingNotifications(true);
@@ -77,19 +79,9 @@ export default function DocenteHomeScreen() {
     }
   }, [activeTab, user?.id]);
 
-  const handleMarkAsRead = async (notifId: string) => {
-    try {
-      await notificationService.markNotificationRead(notifId);
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
-    } catch (e) {
-      console.warn('Error marking notification as read:', e);
-    }
-  };
-
-
-  // Fetch teacher's proposed answers when answers tab becomes active
+  // Fetch teacher's proposed answers when tab active or on screen load
   useEffect(() => {
-    if (activeTab === 'respuestas' && user?.id) {
+    if (user?.id) {
       setLoadingAnswers(true);
       answerService.getAnswersByUser(user.id)
         .then(ans => {
@@ -101,11 +93,118 @@ export default function DocenteHomeScreen() {
           setLoadingAnswers(false);
         });
     }
-  }, [activeTab, user?.id]);
+  }, [user?.id, activeTab]);
+
+  const handleMarkAsRead = async (notifId: string) => {
+    try {
+      await notificationService.markNotificationRead(notifId);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+    } catch (e) {
+      console.warn('Error marking notification as read:', e);
+    }
+  };
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
   };
+
+  const acceptedAnswersCount = myAnswers.filter(a => a.is_accepted).length;
+
+  const renderFeedHeader = (showTitleOnly: boolean = false) => (
+    <View style={styles.feedHeaderContainer}>
+      {!showTitleOnly && (
+        <DocenteSummaryCard
+          tokens={user?.tokens ?? 0}
+          reputation={user?.reputation ?? 0}
+          answersCount={myAnswers.length}
+          acceptedAnswersCount={acceptedAnswersCount}
+          onPressWallet={() => router.push('/(app)/wallet' as any)}
+        />
+      )}
+
+      {/* Section Title */}
+      <View style={styles.sectionHeaderRow}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
+          {showTitleOnly ? 'Marketplace de Ejercicios' : 'Ejercicios Abiertos para Resolver'}
+        </ThemedText>
+      </View>
+
+      <SearchBar
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Buscar ejercicios para resolver..."
+      />
+
+      {/* Category Horizontal Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryChipsScroll}
+      >
+        <Chip
+          label="Todas"
+          selected={selectedCategory === null}
+          onPress={() => handleCategoryPress(null)}
+        />
+        {categories.map((cat) => (
+          <Chip
+            key={cat.id}
+            label={cat.name}
+            selected={selectedCategory === cat.id}
+            onPress={() => handleCategoryPress(cat.id)}
+          />
+        ))}
+      </ScrollView>
+
+      {/* Filter Grid options */}
+      <View style={styles.filterGrid}>
+        <View style={styles.filterHalf}>
+          <Select
+            label="Dificultad"
+            selectedValue={selectedDifficulty}
+            onValueChange={setSelectedDifficulty}
+            options={[
+              { label: 'Todas', value: 'all' },
+              { label: 'Básica', value: 'Básica' },
+              { label: 'Intermedia', value: 'Intermedia' },
+              { label: 'Avanzada', value: 'Avanzada' },
+              { label: 'Olímpica', value: 'Olimpiada' },
+            ]}
+          />
+        </View>
+        <View style={styles.filterHalf}>
+          <Select
+            label="Ordenar"
+            selectedValue={orderBy}
+            onValueChange={setOrderBy}
+            options={[
+              { label: 'Más recientes', value: 'recent' },
+              { label: 'Mayor Recompensa', value: 'highest_reward' },
+              { label: 'Menor Recompensa', value: 'lowest_reward' },
+              { label: 'Más respuestas', value: 'most_answers' },
+              { label: 'Mayor reputación', value: 'highest_reputation' },
+            ]}
+          />
+        </View>
+      </View>
+
+      <View style={styles.filterGrid}>
+        <View style={{ flex: 1 }}>
+          <Select
+            label="Estado"
+            selectedValue={selectedStatus}
+            onValueChange={setSelectedStatus}
+            options={[
+              { label: 'Solo Abiertas', value: 'open' },
+              { label: 'Todos los estados', value: 'all' },
+              { label: 'Resueltas', value: 'solved' },
+              { label: 'En revisión', value: 'in_review' },
+            ]}
+          />
+        </View>
+      </View>
+    </View>
+  );
 
   const renderInicio = () => {
     return (
@@ -119,17 +218,7 @@ export default function DocenteHomeScreen() {
               onPress={() => router.push(`/(app)/question/${item.id}` as any)}
             />
           )}
-          ListHeaderComponent={() => (
-            <View style={styles.feedHeaderContainer}>
-              {/* Wallet Card */}
-              <WalletCard onPressWallet={() => router.push('/(app)/wallet' as any)} />
-
-              {/* Title Section */}
-              <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
-                Ejercicios Abiertos para Resolver
-              </ThemedText>
-            </View>
-          )}
+          ListHeaderComponent={() => renderFeedHeader(false)}
           ListFooterComponent={renderFooterComponent}
           ListEmptyComponent={
             loading ? (
@@ -165,82 +254,7 @@ export default function DocenteHomeScreen() {
               onPress={() => router.push(`/(app)/question/${item.id}` as any)}
             />
           )}
-          ListHeaderComponent={() => (
-            <View style={styles.feedHeaderContainer}>
-              <SearchBar
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Buscar en el marketplace..."
-              />
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryChipsScroll}
-              >
-                <Chip
-                  label="Todos"
-                  selected={selectedCategory === null}
-                  onPress={() => handleCategoryPress(null)}
-                />
-                {categories.map((cat) => (
-                  <Chip
-                    key={cat.id}
-                    label={cat.name}
-                    selected={selectedCategory === cat.id}
-                    onPress={() => handleCategoryPress(cat.id)}
-                  />
-                ))}
-              </ScrollView>
-
-              <View style={styles.filterGrid}>
-                <View style={styles.filterHalf}>
-                  <Select
-                    label="Dificultad"
-                    selectedValue={selectedDifficulty}
-                    onValueChange={setSelectedDifficulty}
-                    options={[
-                      { label: 'Todas', value: 'all' },
-                      { label: 'Básica', value: 'Básica' },
-                      { label: 'Intermedia', value: 'Intermedia' },
-                      { label: 'Avanzada', value: 'Avanzada' },
-                      { label: 'Olímpica', value: 'Olimpiada' },
-                    ]}
-                  />
-                </View>
-                <View style={styles.filterHalf}>
-                  <Select
-                    label="Ordenar por"
-                    selectedValue={orderBy}
-                    onValueChange={setOrderBy}
-                    options={[
-                      { label: 'Más recientes', value: 'recent' },
-                      { label: 'Mayor Recompensa', value: 'highest_reward' },
-                      { label: 'Menor Recompensa', value: 'lowest_reward' },
-                      { label: 'Más respuestas', value: 'most_answers' },
-                      { label: 'Mayor reputación', value: 'highest_reputation' },
-                    ]}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.filterGrid}>
-                <View style={{ flex: 1 }}>
-                  <Select
-                    label="Estado"
-                    selectedValue={selectedStatus}
-                    onValueChange={setSelectedStatus}
-                    options={[
-                      { label: 'Todos los estados', value: 'all' },
-                      { label: 'Abiertas', value: 'open' },
-                      { label: 'Resueltas', value: 'solved' },
-                      { label: 'En revisión', value: 'in_review' },
-                    ]}
-                  />
-                </View>
-              </View>
-            </View>
-          )}
+          ListHeaderComponent={() => renderFeedHeader(true)}
           ListFooterComponent={renderFooterComponent}
           ListEmptyComponent={
             loading ? (
@@ -276,23 +290,30 @@ export default function DocenteHomeScreen() {
             <QuestionSkeleton />
           </View>
         ) : myAnswers.length === 0 ? (
-          <Card style={styles.emptyAnswersCard}>
-            <ThemedText style={{ fontSize: 28, marginBottom: Spacing.eight }}>🎓</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, color: theme.text, textAlign: 'center' }}>
-              Aún no has propuesto soluciones
-            </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, color: theme.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-              Navega en el marketplace, encuentra ejercicios abiertos y propón soluciones de alta calidad para ganar reputación y tokens.
-            </ThemedText>
-          </Card>
+          <EmptyState
+            icon={<GraduationCap size={40} color={theme.primary} />}
+            title="Aún no has propuesto soluciones"
+            description="Explora los ejercicios abiertos del marketplace y propone soluciones de alta calidad para ganar tokens y reputación docente."
+            actionButton={
+              <Button
+                variant="primary"
+                title="Explorar Ejercicios"
+                onPress={() => setActiveTab('inicio')}
+                size="sm"
+              />
+            }
+          />
         ) : (
           <View style={{ gap: Spacing.twelve }}>
             {myAnswers.map((ans) => (
               <Pressable
                 key={ans.id}
+                style={({ pressed }) => [
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }
+                ]}
                 onPress={() => router.push(`/(app)/question/${ans.question_id}` as any)}
               >
-                <Card style={styles.answerHistoryCard}>
+                <Card style={[styles.answerHistoryCard, ans.is_accepted && { borderColor: '#10B981', borderWidth: 1.5 }]}>
                   <View style={styles.answerHistoryHeader}>
                     <ThemedText numberOfLines={1} style={{ fontFamily: Typography.fontFamily.semiBold, color: theme.text, flex: 1 }}>
                       {(ans as any).question_title || 'Ejercicio Resuelto'}
@@ -301,13 +322,27 @@ export default function DocenteHomeScreen() {
                       {new Date(ans.created_at).toLocaleDateString()}
                     </ThemedText>
                   </View>
-                  <ThemedText numberOfLines={2} style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.eight }}>
+
+                  <ThemedText numberOfLines={2} style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.eight, lineHeight: 20 }}>
                     {ans.content}
                   </ThemedText>
+
                   <View style={styles.answerHistoryFooter}>
-                    <ThemedText style={{ fontSize: 11, color: ans.is_accepted ? '#10B981' : theme.accent, fontFamily: Typography.fontFamily.medium }}>
-                      {ans.is_accepted ? '🏆 Solución Oficial Aceptada' : '⏳ Pendiente de Selección'}
-                    </ThemedText>
+                    {ans.is_accepted ? (
+                      <View style={styles.statusBadgeAccepted}>
+                        <CheckCircle2 size={14} color="#047857" style={{ marginRight: 4 }} />
+                        <ThemedText style={{ fontSize: 12, color: '#047857', fontFamily: Typography.fontFamily.semiBold }}>
+                          🏆 Solución Oficial Aceptada
+                        </ThemedText>
+                      </View>
+                    ) : (
+                      <View style={styles.statusBadgePending}>
+                        <Clock size={14} color="#0284C7" style={{ marginRight: 4 }} />
+                        <ThemedText style={{ fontSize: 12, color: '#0284C7', fontFamily: Typography.fontFamily.medium }}>
+                          ⏳ Pendiente de Selección
+                        </ThemedText>
+                      </View>
+                    )}
                   </View>
                 </Card>
               </Pressable>
@@ -322,7 +357,7 @@ export default function DocenteHomeScreen() {
     return (
       <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
         <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
-          Mis Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
+          Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
         </ThemedText>
 
         {loadingNotifications ? (
@@ -330,15 +365,11 @@ export default function DocenteHomeScreen() {
             <ThemedText style={{ color: theme.textSecondary }}>Cargando notificaciones...</ThemedText>
           </Card>
         ) : notifications.length === 0 ? (
-          <View style={styles.emptyAlertsContainer}>
-            <ThemedText style={{ fontSize: 48, marginBottom: Spacing.sixteen }}>🔔</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h3, color: theme.text }}>
-              Sin alertas nuevas
-            </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary, textAlign: 'center', marginTop: 8 }}>
-              Te notificaremos cuando un alumno acepte tus soluciones y ganes tokens de recompensa.
-            </ThemedText>
-          </View>
+          <EmptyState
+            icon={<Bell size={40} color={theme.textSecondary} />}
+            title="Sin alertas nuevas"
+            description="Te notificaremos cuando un alumno acepte tus soluciones y ganes tokens de recompensa."
+          />
         ) : (
           <View style={{ gap: Spacing.twelve }}>
             {notifications.map((notif) => (
@@ -349,11 +380,11 @@ export default function DocenteHomeScreen() {
                 <Card
                   style={[
                     styles.notificationCard,
-                    !notif.is_read && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.03)' }
+                    !notif.is_read && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.04)' }
                   ]}
                 >
                   <View style={styles.notifHeader}>
-                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: theme.text }}>
+                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 14, color: theme.text }}>
                       {notif.title}
                     </ThemedText>
                     {!notif.is_read && (
@@ -363,7 +394,7 @@ export default function DocenteHomeScreen() {
                   <ThemedText style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.four }}>
                     {notif.message}
                   </ThemedText>
-                  <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginTop: Spacing.eight }}>
+                  <ThemedText style={{ fontSize: 11, color: theme.textSecondary, marginTop: Spacing.eight }}>
                     {new Date(notif.created_at).toLocaleString()}
                   </ThemedText>
                 </Card>
@@ -378,10 +409,10 @@ export default function DocenteHomeScreen() {
   const renderPerfil = () => {
     const userInitials = user?.full_name
       ? user.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : 'U';
+      : 'D';
 
     const proposedCount = myAnswers.length;
-    const acceptedCount = myAnswers.filter(a => a.is_accepted).length;
+    const acceptedCount = acceptedAnswersCount;
     const dateJoined = user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
 
     return (
@@ -410,7 +441,7 @@ export default function DocenteHomeScreen() {
 
           <View style={styles.profileStatsRow}>
             <View style={styles.profileStatItem}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Ganancias libres</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Balance Tokens</ThemedText>
               <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
                 🪙 {user?.tokens ?? 0}
               </ThemedText>
@@ -427,21 +458,21 @@ export default function DocenteHomeScreen() {
 
           <View style={{ gap: Spacing.eight }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Miembro desde:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{dateJoined}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Miembro desde:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{dateJoined}</ThemedText>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Respuestas propuestas:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{proposedCount}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Respuestas propuestas:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{proposedCount}</ThemedText>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Soluciones aceptadas:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{acceptedCount}</ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Soluciones aceptadas:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{acceptedCount}</ThemedText>
             </View>
           </View>
         </Card>
 
-        {/* Botón de acceso directo a la Billetera */}
+        {/* Access to Wallet */}
         <Button
           variant="outline"
           title="💳 Ver Mi Billetera"
@@ -463,7 +494,7 @@ export default function DocenteHomeScreen() {
     if (!hasMore) {
       return (
         <View style={styles.endOfFeedContainer}>
-          <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
+          <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>
             Has llegado al final del Marketplace
           </ThemedText>
         </View>
@@ -482,9 +513,11 @@ export default function DocenteHomeScreen() {
   const renderEmptyComponent = () => {
     if (loading) return null;
     return (
-      <View style={styles.centerContainer}>
-        <EmptyQuestions />
-      </View>
+      <EmptyState
+        icon={<Sparkles size={40} color={theme.primary} />}
+        title="Sin ejercicios disponibles"
+        description="No se encontraron preguntas abiertas en la categoría o filtros seleccionados."
+      />
     );
   };
 
@@ -500,15 +533,17 @@ export default function DocenteHomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <Header onNotificationPress={() => handleTabChange('notificaciones')} />
 
-        <View style={styles.content}>
-          {activeTab === 'inicio' && (error ? renderErrorComponent() : renderInicio())}
-          {activeTab === 'marketplace' && (error ? renderErrorComponent() : renderMarketplace())}
-          {activeTab === 'respuestas' && renderRespuestas()}
-          {activeTab === 'notificaciones' && renderNotificaciones()}
-          {activeTab === 'perfil' && renderPerfil()}
-        </View>
+        <View style={styles.centeredWrapper}>
+          <View style={styles.content}>
+            {activeTab === 'inicio' && (error ? renderErrorComponent() : renderInicio())}
+            {activeTab === 'marketplace' && (error ? renderErrorComponent() : renderMarketplace())}
+            {activeTab === 'respuestas' && renderRespuestas()}
+            {activeTab === 'notificaciones' && renderNotificaciones()}
+            {activeTab === 'perfil' && renderPerfil()}
+          </View>
 
-        <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -521,6 +556,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  centeredWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+  },
   content: {
     flex: 1,
   },
@@ -528,36 +569,26 @@ const styles = StyleSheet.create({
     padding: Spacing.sixteen,
     paddingBottom: Spacing.thirtyTwo,
   },
-  walletCard: {
-    padding: Spacing.sixteen,
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.sixteen,
-    borderWidth: 1,
-  },
-  walletStat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  verticalDivider: {
-    width: 1.5,
-    height: 40,
+    marginBottom: Spacing.twelve,
   },
   sectionTitle: {
     fontSize: Typography.sizes.h3,
-    marginBottom: Spacing.twelve,
   },
   categoryChipsScroll: {
     paddingVertical: Spacing.four,
-    marginBottom: Spacing.eight,
+    marginTop: Spacing.twelve,
+    marginBottom: Spacing.twelve,
     gap: Spacing.eight,
   },
   filterGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: Spacing.twelve,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.eight,
   },
   filterHalf: {
     flex: 1,
@@ -571,7 +602,7 @@ const styles = StyleSheet.create({
   },
   feedHeaderContainer: {
     marginTop: Spacing.sixteen,
-    marginBottom: Spacing.eight,
+    marginBottom: Spacing.twelve,
   },
   endOfFeedContainer: {
     alignItems: 'center',
@@ -592,16 +623,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#EF4444',
   },
-  emptyAlertsContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sixtyFour,
-    paddingHorizontal: Spacing.twentyFour,
-  },
   profileCard: {
     padding: Spacing.twenty,
-    borderWidth: 1,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -626,15 +649,8 @@ const styles = StyleSheet.create({
   profileStatItem: {
     alignItems: 'center',
   },
-  emptyAnswersCard: {
-    padding: Spacing.twenty,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
   answerHistoryCard: {
     padding: Spacing.sixteen,
-    borderWidth: 1,
   },
   answerHistoryHeader: {
     flexDirection: 'row',
@@ -644,16 +660,30 @@ const styles = StyleSheet.create({
   answerHistoryFooter: {
     marginTop: Spacing.twelve,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-  },
-  centerContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.twentyFour,
+  },
+  statusBadgeAccepted: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    paddingHorizontal: Spacing.eight,
+    paddingVertical: Spacing.four,
+    borderRadius: Radius.full,
+  },
+  statusBadgePending: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
+    borderWidth: 1,
+    paddingHorizontal: Spacing.eight,
+    paddingVertical: Spacing.four,
+    borderRadius: Radius.full,
   },
   notificationCard: {
     padding: Spacing.sixteen,
-    borderWidth: 1,
   },
   notifHeader: {
     flexDirection: 'row',
