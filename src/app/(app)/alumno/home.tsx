@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Pressable, View, FlatList, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BookOpen, Bell, Sparkles } from 'lucide-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing, Radius, Typography } from '@/constants/theme';
+import { Spacing, Radius, Typography, MaxContentWidth } from '@/constants/theme';
 import { QuestionCard } from '@/components/questions/QuestionCard';
 import { QuestionSkeleton } from '@/components/questions/QuestionSkeleton';
-import { EmptyQuestions } from '@/components/questions/EmptyQuestions';
 import { Select } from '@/components/ui/Select';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +17,8 @@ import { Card } from '@/components/ui/Card';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { Header } from '@/components/ui/Header';
 import { BottomNavigation } from '@/components/ui/BottomNavigation';
-import { WalletCard } from '@/components/ui/WalletCard';
+import { UserSummaryCard } from '@/components/ui/UserSummaryCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { notificationService } from '@/services/notificationService';
 
@@ -92,226 +93,108 @@ export default function AlumnoHomeScreen() {
     }
   };
 
-  const renderInicio = () => {
-    return (
-      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
-        {/* Wallet Card */}
-        <WalletCard onPressWallet={() => router.push('/(app)/wallet' as any)} />
+  // Compute total answers received across all alumno questions
+  const answersReceivedCount = myQuestions.reduce((acc, q) => {
+    const qAnswers = q.answers ? q.answers.filter((a: any) => a.deleted_at === null).length : 0;
+    return acc + qAnswers;
+  }, 0);
 
-        {/* Publicar Nueva Pregunta button */}
-        <Button
-          variant="primary"
-          title="+ Publicar Nuevo Ejercicio"
-          onPress={() => router.push('/(app)/alumno/publish' as any)}
-          style={styles.publishBtn}
-        />
+  const renderMarketplaceHeader = () => (
+    <View style={styles.feedHeaderContainer}>
+      {/* 1. User Summary Metrics Card */}
+      <UserSummaryCard
+        tokens={user?.tokens ?? 0}
+        reputation={user?.reputation ?? 0}
+        questionsCount={myQuestions.length}
+        answersReceivedCount={answersReceivedCount}
+        onPressWallet={() => router.push('/(app)/wallet' as any)}
+      />
 
-        {/* Mis Ejercicios Section Title */}
+      {/* 2. Main CTA Button: Emphasis Fucsia with Plus Icon */}
+      <Button
+        variant="emphasis"
+        title="Publicar Nuevo Ejercicio"
+        onPress={() => router.push('/(app)/alumno/publish' as any)}
+        style={styles.publishBtn}
+      />
+
+      {/* 3. Section: Mis Ejercicios Publicados */}
+      <View style={styles.sectionHeaderRow}>
         <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
           Mis Ejercicios Publicados ({myQuestions.length})
         </ThemedText>
+      </View>
 
-        {myQuestions.length === 0 ? (
-          <Card style={styles.emptyMineCard}>
-            <ThemedText style={{ fontSize: 28, marginBottom: Spacing.eight }}>📚</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, color: theme.text, textAlign: 'center' }}>
-              Aún no has publicado ningún ejercicio
-            </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, color: theme.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-              Crea tu primera pregunta matemática para que la comunidad de docentes expertos comience a resolverla.
-            </ThemedText>
-          </Card>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.myQuestionsScroll}
-          >
-            {myQuestions.map((q) => (
-              <Pressable
-                key={q.id}
-                style={[styles.myQuestionItem, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                onPress={() => router.push(`/(app)/question/${q.id}` as any)}
+      {myQuestions.length === 0 ? (
+        <EmptyState
+          icon={<BookOpen size={36} color={theme.primary} />}
+          title="Aún no has publicado ningún ejercicio"
+          description="Publica tu primera consulta matemática para que la comunidad de docentes expertos comience a resolverla."
+          actionButton={
+            <Button
+              variant="outline"
+              title="Crear primera pregunta"
+              onPress={() => router.push('/(app)/alumno/publish' as any)}
+              size="sm"
+            />
+          }
+        />
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.myQuestionsScroll}
+        >
+          {myQuestions.map((q) => (
+            <Pressable
+              key={q.id}
+              style={({ pressed }) => [
+                styles.myQuestionItem,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }
+              ]}
+              onPress={() => router.push(`/(app)/question/${q.id}` as any)}
+            >
+              <ThemedText
+                numberOfLines={2}
+                style={[styles.myQuestionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}
               >
-                <ThemedText
-                  numberOfLines={2}
-                  style={[styles.myQuestionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}
-                >
-                  {q.title}
+                {q.title}
+              </ThemedText>
+              <View style={styles.myQuestionMeta}>
+                <ThemedText style={{ fontSize: Typography.sizes.caption, color: theme.primary, fontFamily: Typography.fontFamily.semiBold }}>
+                  🪙 {q.reward_tokens} TK
                 </ThemedText>
-                <View style={styles.myQuestionMeta}>
-                  <ThemedText style={{ fontSize: Typography.sizes.caption, color: theme.accent, fontFamily: Typography.fontFamily.medium }}>
-                    💰 {q.reward_tokens} TK
-                  </ThemedText>
-                  <ThemedText style={{ fontSize: Typography.sizes.small, color: theme.textSecondary }}>
-                    {q.status === 'solved' ? '✅ Resuelto' : '⏳ Abierto'}
-                  </ThemedText>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
-      </ScrollView>
-    );
-  };
+                <ThemedText style={{ fontSize: Typography.sizes.small, color: q.status === 'solved' ? '#10B981' : theme.textSecondary, fontFamily: Typography.fontFamily.medium }}>
+                  {q.status === 'solved' ? '✓ Resuelto' : '⏳ Abierto'}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
 
-  const renderNotificaciones = () => {
-    return (
-      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+      {/* 4. Section: Marketplace Público */}
+      <View style={[styles.sectionHeaderRow, { marginTop: Spacing.twentyFour }]}>
         <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
-          Mis Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
+          Marketplace Público
         </ThemedText>
+      </View>
 
-        {loadingNotifications ? (
-          <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
-            <ThemedText style={{ color: theme.textSecondary }}>Cargando notificaciones...</ThemedText>
-          </Card>
-        ) : notifications.length === 0 ? (
-          <View style={styles.emptyAlertsContainer}>
-            <ThemedText style={{ fontSize: 48, marginBottom: Spacing.sixteen }}>🔔</ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h3, color: theme.text }}>
-              Sin alertas nuevas
-            </ThemedText>
-            <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary, textAlign: 'center', marginTop: 8 }}>
-              Te notificaremos en cuanto un docente proponga una solución a tus ejercicios.
-            </ThemedText>
-          </View>
-        ) : (
-          <View style={{ gap: Spacing.twelve }}>
-            {notifications.map((notif) => (
-              <Pressable
-                key={notif.id}
-                onPress={() => handleMarkAsRead(notif.id)}
-              >
-                <Card
-                  style={[
-                    styles.notificationCard,
-                    !notif.is_read && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.03)' }
-                  ]}
-                >
-                  <View style={styles.notifHeader}>
-                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 13, color: theme.text }}>
-                      {notif.title}
-                    </ThemedText>
-                    {!notif.is_read && (
-                      <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />
-                    )}
-                  </View>
-                  <ThemedText style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.four }}>
-                    {notif.message}
-                  </ThemedText>
-                  <ThemedText style={{ fontSize: 9, color: theme.textSecondary, marginTop: Spacing.eight }}>
-                    {new Date(notif.created_at).toLocaleString()}
-                  </ThemedText>
-                </Card>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    );
-  };
-
-  const renderPerfil = () => {
-    const userInitials = user?.full_name
-      ? user.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : 'U';
-
-    const publishedCount = myQuestions.length;
-    const solvedCount = myQuestions.filter(q => q.status === 'solved').length;
-    const dateJoined = user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
-
-    return (
-      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
-        <Card style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={[styles.profileAvatar, { backgroundColor: theme.primary }]}>
-              <ThemedText style={{ fontSize: 20, fontFamily: Typography.fontFamily.bold, color: '#111111' }}>
-                {userInitials}
-              </ThemedText>
-            </View>
-            <View style={{ flex: 1 }}>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h2, color: theme.text }}>
-                {user?.full_name || 'Estudiante'}
-              </ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary }}>
-                {user?.email || 'alumno@yachaiya.com'}
-              </ThemedText>
-              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, fontSize: Typography.sizes.caption, color: theme.primary, marginTop: 4 }}>
-                🎒 Rol: Alumno
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
-
-          <View style={styles.profileStatsRow}>
-            <View style={styles.profileStatItem}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Saldo de Tokens</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
-                🪙 {user?.tokens ?? 0}
-              </ThemedText>
-            </View>
-            <View style={styles.profileStatItem}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Reputación</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
-                ⭐ {user?.reputation ?? 0}
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
-
-          <View style={{ gap: Spacing.eight }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Miembro desde:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{dateJoined}</ThemedText>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Preguntas realizadas:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{publishedCount}</ThemedText>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>Ejercicios resueltos:</ThemedText>
-              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 12 }}>{solvedCount}</ThemedText>
-            </View>
-          </View>
-        </Card>
-
-        {/* Botón de acceso directo a la Billetera */}
-        <Button
-          variant="outline"
-          title="💳 Ver Mi Billetera"
-          onPress={() => router.push('/(app)/wallet' as any)}
-          style={{ marginTop: Spacing.sixteen }}
-        />
-
-        <Button
-          variant="danger"
-          title="Cerrar Sesión"
-          onPress={signOut}
-          style={{ marginTop: Spacing.twenty }}
-        />
-      </ScrollView>
-    );
-  };
-
-  const renderHeaderComponent = () => (
-    <View style={styles.feedHeaderContainer}>
       <SearchBar
         value={search}
         onChangeText={setSearch}
-        placeholder="Buscar ejercicios..."
+        placeholder="Buscar preguntas de la comunidad..."
       />
 
-      {/* Category Horizontal chips */}
+      {/* Category Horizontal Pills */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoryChipsScroll}
       >
         <Chip
-          label="Todos"
+          label="Todas"
           selected={selectedCategory === null}
           onPress={() => handleCategoryPress(null)}
         />
@@ -325,7 +208,7 @@ export default function AlumnoHomeScreen() {
         ))}
       </ScrollView>
 
-      {/* Filters options row */}
+      {/* Filters Options Grid */}
       <View style={styles.filterGrid}>
         <View style={styles.filterHalf}>
           <Select
@@ -343,7 +226,7 @@ export default function AlumnoHomeScreen() {
         </View>
         <View style={styles.filterHalf}>
           <Select
-            label="Ordenar por"
+            label="Ordenar"
             selectedValue={orderBy}
             onValueChange={setOrderBy}
             options={[
@@ -375,11 +258,148 @@ export default function AlumnoHomeScreen() {
     </View>
   );
 
+  const renderNotificaciones = () => {
+    return (
+      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+        <ThemedText style={[styles.sectionTitle, { fontFamily: Typography.fontFamily.semiBold, color: theme.text }]}>
+          Notificaciones ({notifications.filter(n => !n.is_read).length} sin leer)
+        </ThemedText>
+
+        {loadingNotifications ? (
+          <Card style={{ padding: Spacing.twenty, alignItems: 'center' }}>
+            <ThemedText style={{ color: theme.textSecondary }}>Cargando notificaciones...</ThemedText>
+          </Card>
+        ) : notifications.length === 0 ? (
+          <EmptyState
+            icon={<Bell size={40} color={theme.textSecondary} />}
+            title="Sin alertas nuevas"
+            description="Te notificaremos en cuanto un docente proponga una solución a tus ejercicios."
+          />
+        ) : (
+          <View style={{ gap: Spacing.twelve }}>
+            {notifications.map((notif) => (
+              <Pressable
+                key={notif.id}
+                onPress={() => handleMarkAsRead(notif.id)}
+              >
+                <Card
+                  style={[
+                    styles.notificationCard,
+                    !notif.is_read && { borderColor: theme.primary, borderWidth: 1.5, backgroundColor: 'rgba(108, 198, 255, 0.04)' }
+                  ]}
+                >
+                  <View style={styles.notifHeader}>
+                    <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: 14, color: theme.text }}>
+                      {notif.title}
+                    </ThemedText>
+                    {!notif.is_read && (
+                      <View style={[styles.unreadDot, { backgroundColor: theme.primary }]} />
+                    )}
+                  </View>
+                  <ThemedText style={{ fontSize: Typography.sizes.body, color: theme.textSecondary, marginTop: Spacing.four }}>
+                    {notif.message}
+                  </ThemedText>
+                  <ThemedText style={{ fontSize: 11, color: theme.textSecondary, marginTop: Spacing.eight }}>
+                    {new Date(notif.created_at).toLocaleString()}
+                  </ThemedText>
+                </Card>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
+  const renderPerfil = () => {
+    const userInitials = user?.full_name
+      ? user.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+      : 'U';
+
+    const publishedCount = myQuestions.length;
+    const solvedCount = myQuestions.filter(q => q.status === 'solved').length;
+    const dateJoined = user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+
+    return (
+      <ScrollView contentContainerStyle={styles.tabContentContainer} showsVerticalScrollIndicator={false}>
+        <Card style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <View style={[styles.profileAvatar, { backgroundColor: theme.primary }]}>
+              <ThemedText style={{ fontSize: 20, fontFamily: Typography.fontFamily.bold, color: '#FFFFFF' }}>
+                {userInitials}
+              </ThemedText>
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.semiBold, fontSize: Typography.sizes.h2, color: theme.text }}>
+                {user?.full_name || 'Estudiante'}
+              </ThemedText>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.regular, fontSize: Typography.sizes.body, color: theme.textSecondary }}>
+                {user?.email || 'alumno@yachaiya.com'}
+              </ThemedText>
+              <ThemedText style={{ fontFamily: Typography.fontFamily.medium, fontSize: Typography.sizes.caption, color: theme.primary, marginTop: 4 }}>
+                🎓 Rol: Alumno
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
+
+          <View style={styles.profileStatsRow}>
+            <View style={styles.profileStatItem}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Saldo Tokens</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+                🪙 {user?.tokens ?? 0}
+              </ThemedText>
+            </View>
+            <View style={styles.profileStatItem}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>Reputación</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.bold, fontSize: Typography.sizes.h3, marginTop: 4 }}>
+                ⭐ {user?.reputation ?? 0}
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.horizontalDivider, { backgroundColor: theme.border }]} />
+
+          <View style={{ gap: Spacing.eight }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Miembro desde:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{dateJoined}</ThemedText>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Preguntas realizadas:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{publishedCount}</ThemedText>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>Ejercicios resueltos:</ThemedText>
+              <ThemedText style={{ color: theme.text, fontFamily: Typography.fontFamily.medium, fontSize: 13 }}>{solvedCount}</ThemedText>
+            </View>
+          </View>
+        </Card>
+
+        {/* Access to Wallet */}
+        <Button
+          variant="outline"
+          title="💳 Ver Mi Billetera"
+          onPress={() => router.push('/(app)/wallet' as any)}
+          style={{ marginTop: Spacing.sixteen }}
+        />
+
+        <Button
+          variant="danger"
+          title="Cerrar Sesión"
+          onPress={signOut}
+          style={{ marginTop: Spacing.twenty }}
+        />
+      </ScrollView>
+    );
+  };
+
   const renderFooterComponent = () => {
     if (!hasMore) {
       return (
         <View style={styles.endOfFeedContainer}>
-          <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
+          <ThemedText style={{ color: theme.textSecondary, fontSize: Typography.sizes.caption }}>
             Has llegado al final del Marketplace
           </ThemedText>
         </View>
@@ -398,9 +418,19 @@ export default function AlumnoHomeScreen() {
   const renderEmptyComponent = () => {
     if (loading) return null;
     return (
-      <View style={styles.centerContainer}>
-        <EmptyQuestions onPublishPress={() => router.push('/(app)/alumno/publish' as any)} />
-      </View>
+      <EmptyState
+        icon={<Sparkles size={40} color={theme.primary} />}
+        title="Sin ejercicios disponibles"
+        description="No se encontraron preguntas en la categoría o filtros seleccionados."
+        actionButton={
+          <Button
+            variant="outline"
+            title="Publicar una pregunta"
+            onPress={() => router.push('/(app)/alumno/publish' as any)}
+            size="sm"
+          />
+        }
+      />
     );
   };
 
@@ -416,49 +446,50 @@ export default function AlumnoHomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <Header onNotificationPress={() => handleTabChange('notificaciones')} />
 
-        <View style={styles.content}>
-          {activeTab === 'inicio' && renderInicio()}
-          {activeTab === 'notificaciones' && renderNotificaciones()}
-          {activeTab === 'perfil' && renderPerfil()}
+        <View style={styles.centeredWrapper}>
+          <View style={styles.content}>
+            {(activeTab === 'inicio' || activeTab === 'explorar') && (
+              error ? (
+                renderErrorComponent()
+              ) : (
+                <FlatList
+                  data={questions}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <QuestionCard
+                      question={item}
+                      onPress={() => router.push(`/(app)/question/${item.id}` as any)}
+                    />
+                  )}
+                  ListHeaderComponent={renderMarketplaceHeader}
+                  ListFooterComponent={renderFooterComponent}
+                  ListEmptyComponent={
+                    loading ? (
+                      <View style={styles.skeletonsContainer}>
+                        <QuestionSkeleton />
+                        <QuestionSkeleton />
+                        <QuestionSkeleton />
+                      </View>
+                    ) : (
+                      renderEmptyComponent()
+                    )
+                  }
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.4}
+                  contentContainerStyle={styles.listContainer}
+                  showsVerticalScrollIndicator={false}
+                />
+              )
+            )}
 
-          {activeTab === 'explorar' && (
-            error ? (
-              renderErrorComponent()
-            ) : (
-              <FlatList
-                data={questions}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <QuestionCard
-                    question={item}
-                    onPress={() => router.push(`/(app)/question/${item.id}` as any)}
-                  />
-                )}
-                ListHeaderComponent={renderHeaderComponent}
-                ListFooterComponent={renderFooterComponent}
-                ListEmptyComponent={
-                  loading ? (
-                    <View style={styles.skeletonsContainer}>
-                      <QuestionSkeleton />
-                      <QuestionSkeleton />
-                      <QuestionSkeleton />
-                    </View>
-                  ) : (
-                    renderEmptyComponent()
-                  )
-                }
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.4}
-                contentContainerStyle={styles.listContainer}
-                showsVerticalScrollIndicator={false}
-              />
-            )
-          )}
+            {activeTab === 'notificaciones' && renderNotificaciones()}
+            {activeTab === 'perfil' && renderPerfil()}
+          </View>
+
+          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         </View>
-
-        <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
       </SafeAreaView>
     </ThemedView>
   );
@@ -471,6 +502,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  centeredWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+  },
   content: {
     flex: 1,
   },
@@ -478,48 +515,36 @@ const styles = StyleSheet.create({
     padding: Spacing.sixteen,
     paddingBottom: Spacing.thirtyTwo,
   },
-  walletCard: {
-    padding: Spacing.sixteen,
+  publishBtn: {
+    marginBottom: Spacing.twentyFour,
+    height: 48,
+    borderRadius: Radius.r16,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.sixteen,
-    borderWidth: 1,
-  },
-  walletStat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  verticalDivider: {
-    width: 1.5,
-    height: 40,
-  },
-  publishBtn: {
-    marginBottom: Spacing.twentyFour,
+    marginBottom: Spacing.twelve,
   },
   sectionTitle: {
     fontSize: Typography.sizes.h3,
-    marginBottom: Spacing.twelve,
-  },
-  emptyMineCard: {
-    padding: Spacing.twenty,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
   },
   myQuestionsScroll: {
     paddingVertical: Spacing.four,
     gap: Spacing.twelve,
+    marginBottom: Spacing.eight,
   },
   myQuestionItem: {
-    width: 180,
+    width: 200,
     borderWidth: 1,
-    borderRadius: Radius.r12,
-    padding: Spacing.twelve,
+    borderRadius: Radius.r16,
+    padding: Spacing.sixteen,
+    justifyContent: 'space-between',
   },
   myQuestionTitle: {
     fontSize: Typography.sizes.body,
-    marginBottom: Spacing.eight,
+    lineHeight: 20,
+    marginBottom: Spacing.twelve,
   },
   myQuestionMeta: {
     flexDirection: 'row',
@@ -528,14 +553,15 @@ const styles = StyleSheet.create({
   },
   categoryChipsScroll: {
     paddingVertical: Spacing.four,
-    marginBottom: Spacing.eight,
+    marginTop: Spacing.twelve,
+    marginBottom: Spacing.twelve,
     gap: Spacing.eight,
   },
   filterGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: Spacing.twelve,
-    marginBottom: Spacing.four,
+    marginBottom: Spacing.eight,
   },
   filterHalf: {
     flex: 1,
@@ -549,7 +575,7 @@ const styles = StyleSheet.create({
   },
   feedHeaderContainer: {
     marginTop: Spacing.sixteen,
-    marginBottom: Spacing.eight,
+    marginBottom: Spacing.twelve,
   },
   endOfFeedContainer: {
     alignItems: 'center',
@@ -570,16 +596,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#EF4444',
   },
-  emptyAlertsContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sixtyFour,
-    paddingHorizontal: Spacing.twentyFour,
-  },
   profileCard: {
     padding: Spacing.twenty,
-    borderWidth: 1,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -604,14 +622,8 @@ const styles = StyleSheet.create({
   profileStatItem: {
     alignItems: 'center',
   },
-  centerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.twentyFour,
-  },
   notificationCard: {
     padding: Spacing.sixteen,
-    borderWidth: 1,
   },
   notifHeader: {
     flexDirection: 'row',

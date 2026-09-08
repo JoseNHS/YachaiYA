@@ -5,6 +5,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Spacing, Radius, Typography } from '@/constants/theme';
 
 export interface EmptyStateProps {
+  icon?: React.ReactNode;
   emoji?: string;
   title: string;
   description: string;
@@ -12,6 +13,7 @@ export interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon,
   emoji = '🔭',
   title,
   description,
@@ -29,7 +31,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         }
       ]}
     >
-      <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+      {icon ? (
+        <View style={styles.iconContainer}>{icon}</View>
+      ) : (
+        <ThemedText style={styles.emoji}>{emoji}</ThemedText>
+      )}
       
       <ThemedText
         style={[
@@ -66,13 +72,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: Radius.r16,
+    borderRadius: Radius.r20,
     borderWidth: 1,
-    padding: Spacing.thirtyTwo,
+    padding: Spacing.twentyFour,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: Spacing.sixteen,
     width: '100%',
+  },
+  iconContainer: {
+    marginBottom: Spacing.sixteen,
   },
   emoji: {
     fontSize: 40,
@@ -87,7 +96,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.body,
     textAlign: 'center',
     lineHeight: 20,
-    marginBottom: Spacing.twentyFour,
+    marginBottom: Spacing.sixteen,
   },
   actionContainer: {
     width: '100%',
